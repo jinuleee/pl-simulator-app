@@ -111,6 +111,13 @@ th{color:var(--tx3);font-size:11px;font-weight:600}
 textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 .f2{display:flex;justify-content:space-between;align-items:center;max-width:420px;padding:4px 0;color:var(--tx2)}
 .f2 .in.y{width:112px}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.1;min-width:54px}
+.tab .e,.ib .e{font-size:18px}.tab .l,.ib .l{font-size:10px;margin-top:2px}
+.ib{border:1px solid var(--bd2);background:var(--pn);border-radius:10px;min-width:50px;padding:3px 8px;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.ib:hover{background:var(--pn2)}.ib .l{color:var(--tx2)}
+.cinc{position:absolute;top:10px;left:14px;z-index:1;font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:4px;cursor:pointer}
+.cv{display:inline-flex;align-items:center;white-space:nowrap;overflow:hidden;box-sizing:border-box;height:28px}
+.nmi.cv{display:flex;height:auto;min-height:22px}
 </style>
 </head>
 <body>
@@ -118,42 +125,44 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 /*ENGINE_START*/
-// 손익 계산 엔진 (화면과 분리. test_engine.js가 이 구간만 꺼내 엑셀 원본 값과 대조)
+// 손익 계산 엔진 (화면과 분리. test_engine.js가 이 구간만 꺼내 예시 값과 대조)
 var ROY_BASES=['판매가(VAT포함)','매출(VAT제외)','공급가','원가합계','구성품1원가'];
-var CH_KEYS=['방송','미리주문','B2C','직매입','공구'];
-var CH_NAME={'방송':'홈쇼핑 방송','미리주문':'홈쇼핑 미리주문','B2C':'B2C','직매입':'직매입','공구':'공구'};
+var CH_KEYS=['방송','B2C','직매입','공구'];
+var CH_NAME={'방송':'홈쇼핑 방송','B2C':'B2C(+미리주문)','직매입':'직매입','공구':'공구'};
 var BTYPES=['라이브','데이터'];          // 라이브: 매 회차 고정비 포함 / 데이터: 2회차부터 고정비 제외
-var TEMPS=['냉동','냉장','상온'];        // 품온
-var SIZES=['소형','중형','대형','선물'];
-var ITEMS=['작업료_포장비','아이스박스·박스','선물박스','카톤박스','포장재(레토르트 등)','아이스팩','보냉비닐','드라이아이스','OPP테이프'];
-// 팜조아 물류비 기본값 (품온_크기). 현재는 엑셀 원본 블록에서 가져온 임시값 - 실제 단가 받으면 설정 탭에서 교체
-var DEF_PACK={
- '상온_소형':{v:[[1000,1],[1000,1],[0,0],[0,0],[0,0],[200,0],[100,0],[1000,0],[50,0]],note:'임시값'},
- '냉동_소형':{v:[[1000,1],[850,1],[0,0],[0,0],[0,0],[100,2],[100,1],[600,1],[50,0]],note:'임시값'},
- '냉동_중형':{v:[[1000,1],[1110,1],[0,0],[0,0],[0,0],[114,2],[100,1],[637,1],[0,0]],note:'임시값'},
- '냉장_중형':{v:[[1000,1],[1109,1],[0,0],[0,0],[0,0],[114,2],[100,1],[637,0],[0,0]],note:'임시값'},
- '냉동_선물':{v:[[0,0],[0,0],[1050,1],[350,1],[150,8],[0,0],[100,0],[600,0],[50,0]],note:'임시값'}
-};
-var DEF_ST={vat:1.1,conv:0.85,stor:0.012,ship:2400,pack:DEF_PACK};
+var TEMPS=['냉동','상온'];               // 품온 (냉장은 취급 안 함)
+// 포장 항목: [저장 슬롯 번호, 이름]. 슬롯 번호는 저장 데이터와 호환되도록 고정이고, 품온마다 쓰는 항목만 보임
+var PACK={'냉동':[[0,'작업료'],[1,'아이스박스'],[4,'포장재'],[5,'아이스팩'],[6,'보냉비닐'],[7,'드라이아이스'],[8,'OPP테이프']],
+ '상온':[[0,'작업료'],[2,'선물박스'],[3,'카톤박스'],[4,'포장재(레토르트 등)'],[8,'OPP테이프']]};
+var PLT_ITEMS=[['recv','입고 (파렛트당)'],['send','출고 (파렛트당)'],['pick','피킹·전표발행 (파렛트당)'],['piece','개별 피킹 (박스당)'],['sticker','스티커 부착 (박스당)'],['trunk','운송비 (차량 1회당)'],['load','상하차 (차량 1회당)']];
+var LMODES=[['rate','비율 (공급가 기준)'],['plt','직납 상세 (파렛트)']];
+// 물류사 견적 기본값 (물류사 가). 현재는 예시 블록에서 가져온 임시값 - 실제 견적을 받으면 설정 탭에서 교체
+var DEF_ST={vat:1.1,conv:0.85,dmlog:0.08,dmlog2:0.06,vendors:[{id:'pj',name:'물류사 가',ship:2400,stor:0.012,
+ pack:{'냉동':[[1000,1],[850,1],[0,0],[0,0],[0,0],[100,2],[100,1],[600,1],[50,0]],
+       '상온':[[1000,1],[0,0],[0,0],[1000,1],[0,0],[0,0],[0,0],[0,0],[50,0]]},
+ plt:{recv:3000,send:3000,pick:3000,piece:250,sticker:80,trunk:300000,load:30000},
+ note:'임시값'}]};
 function num(x){x=parseFloat(x);return isNaN(x)?0:x}
 function isNil(v){return v===null||v===undefined||v===''}
-function packKey(temp,size){return temp+'_'+size}
-function newComp(){return {n:'',p:0,q:1,w:0}}   // 이름, 단가(견적), 수량, 내용량(g, 1개당)
-function newSc(){return {name:'',btype:'라이브',chname:'',price:0,commrate:0,target:0,tax:'과세',temp:'냉동',size:'소형',
- comps:[newComp()],ars:0,petc:0,adrate:0,
- roy:[{n:'',b:'',x:1,r:0},{n:'',b:'',x:1,r:0},{n:'',b:'',x:1,r:0}],
- fix:{vcr:0,gma:0,cook:0,mat:0,panel:0,fetc:0},
- shipp:null,shipq:null,iov:{},ston:0,dmfix:0}}
+function newComp(){return {n:'',p:null,q:null,w:null}}   // 이름, 단가(견적), 수량, 내용량(g, 1개당). 비워 두면 placeholder(예: ...)가 보임
+function newSc(){return {name:'',btype:'라이브',chname:'',price:null,commrate:null,target:null,tax:'과세',temp:'냉동',
+ comps:[newComp()],markup:null,ars:null,petc:null,adrate:null,
+ roy:[{n:'',b:'',x:1,r:null},{n:'',b:'',x:1,r:null},{n:'',b:'',x:1,r:null}],
+ fix:{vcr:null,gma:null,cook:null,mat:null,panel:null,fetc:null},
+ vendor:'',shipp:null,shipq:null,iov:{},ston:0,
+ lmode:'rate',lrate:null,prom:null,lrate2:null,bq:null,bp:null,trk:null,dmfix:null,exc:0}}
+function vendorOf(ST,s){var L=ST.vendors||[],i;for(i=0;i<L.length;i++)if(L[i].id===s.vendor)return L[i];return L[0]||null}
 function calcSc(s,ch,ST){
  var o={},bc=ch==='방송',dm=ch==='직매입',k;
  o.conv=bc?ST.conv:1;                                  // 전환율은 방송만 85% 고정
  o.baseqty=bc?num(s.target)*o.conv:(dm?num(s.target):1);
  o.cost=0;o.weight=0;
  s.comps.forEach(function(c){var q=num(c.q);o.cost+=num(c.p)*q;o.weight+=num(c.w)*q});
+ o.cost*=1+num(s.markup);                              // 원가 가산율 (유통 단계 마진 등, 예: 5.3%)
  o.tax=s.tax||'과세';o.temp=s.temp||'냉동';
  o.price=num(s.price);
  o.sales=o.tax==='과세'?o.price/ST.vat:o.price;
- o.comm=o.sales*num(s.commrate);
+ o.comm=o.sales*num(s.commrate);                       // 직매입은 채널 마진율
  o.supply=o.sales-o.comm;
  o.ad=ch==='B2C'?o.sales*num(s.adrate):0;
  var c1=s.comps.length?num(s.comps[0].p)*num(s.comps[0].q):0;
@@ -164,22 +173,34 @@ function calcSc(s,ch,ST){
  o.sga1=num(s.ars)+num(s.petc)+o.ad+o.ra[0]+o.ra[1]+o.ra[2];
  o.fixtot=0;if(bc)for(k in s.fix)o.fixtot+=num(s.fix[k]);
  o.fixset=o.baseqty>0?o.fixtot/o.baseqty:0;
- o.packKey=packKey(o.temp,s.size||'소형');
- var pr=ST.pack&&ST.pack[o.packKey];o.packFound=!!pr;
- o.items=ITEMS.map(function(_,k){var a=pr?pr.v[k]:[0,0],ov=(s.iov&&s.iov[k])||{};
-  return {pa:num(a[0]),qa:num(a[1]),p:isNil(ov.p)?num(a[0]):num(ov.p),q:isNil(ov.q)?num(a[1]):num(ov.q)}});
- o.shipp=isNil(s.shipp)?ST.ship:num(s.shipp);
- o.shipqA=bc?0:1;o.shipq=isNil(s.shipq)?o.shipqA:num(s.shipq);
- o.stor=o.sales*ST.stor*(s.ston?1:0);
- o.dmset=dm&&o.baseqty>0?num(s.dmfix)/o.baseqty:0;
- o.logi=o.shipp*o.shipq+o.stor+o.dmset;
- o.items.forEach(function(t){o.logi+=t.p*t.q});
+ var vd=vendorOf(ST,s);o.vname=vd?vd.name:'';
+ o.items=[];o.packFound=false;
+ if(dm){                                               // 직매입: 비율(공급가 x 물류비율) 또는 직납 상세(운송+파렛트+박스)
+  var pl=(vd&&vd.plt)||{},tq=num(s.target),bq=num(s.bq),bp=num(s.bp),trk=isNil(s.trk)?1:num(s.trk);
+  o.lrate=isNil(s.lrate)?ST.dmlog:num(s.lrate);
+  o.pallets=bq>0&&bp>0?tq/(bq*bp):0;o.boxes=bq>0?tq/bq:0;   // shortcut: 파렛트 수는 소수 그대로 (엑셀 뇨끼 표와 동일), 올림이 필요하면 여기서 Math.ceil
+  o.pltTotal=trk*(num(pl.trunk)+num(pl.load))+o.pallets*(num(pl.recv)+num(pl.send)+num(pl.pick))+o.boxes*(num(pl.piece)+num(pl.sticker))+num(s.dmfix);
+  o.logi=s.lmode==='plt'?(tq>0?o.pltTotal/tq:0):o.supply*o.lrate;
+ }else{                                                // 택배형: 물류사 견적(택배 + 품온별 포장 항목 + 보관료)
+  var pr=vd&&vd.pack[o.temp];o.packFound=!!pr;
+  o.items=(PACK[o.temp]||[]).map(function(it){var j=it[0],a=pr?pr[j]:[0,0],ov=(s.iov&&s.iov[j])||{};
+   return {k:j,label:it[1],pa:num(a[0]),qa:num(a[1]),p:isNil(ov.p)?num(a[0]):num(ov.p),q:isNil(ov.q)?num(a[1]):num(ov.q)}});
+  o.shipp=isNil(s.shipp)?(vd?num(vd.ship):0):num(s.shipp);
+  o.shipqA=bc?0:1;o.shipq=isNil(s.shipq)?o.shipqA:num(s.shipq);
+  o.stor=o.sales*(vd?num(vd.stor):0)*(s.ston?1:0);
+  o.logi=o.shipp*o.shipq+o.stor;
+  o.items.forEach(function(t){o.logi+=t.p*t.q})}
  o.sga=o.sga1+o.fixset+o.logi;
  o.cmpre=o.supply-o.cost-o.sga1-o.logi;                // 고정비 차감 전 CM (엑셀 대조용)
  o.cm=o.supply-o.cost-o.sga;
- o.cmr=o.sales?o.cm/o.sales:0;
+ o.cmb=dm?o.supply:o.sales;                            // CM% 분모: 직매입은 공급가, 그 외는 VAT 제외 매출
+ o.cmr=o.cmb?o.cm/o.cmb:0;
  o.rep=bc&&s.btype==='데이터';                          // 데이터(녹화): 2회차부터 방송 고정비 제외
- o.cm2=o.rep?o.cm+o.fixset:o.cm;o.cmr2=o.sales?o.cm2/o.sales:0;
+ o.cm2=o.rep?o.cm+o.fixset:o.cm;o.cmr2=o.cmb?o.cm2/o.cmb:0;
+ o.prom=num(s.prom);o.prOn=dm&&o.prom>0;               // 직매입 행사: 공급가를 할인율만큼 낮추고 행사 물류비율 적용
+ o.lrate2=isNil(s.lrate2)?ST.dmlog2:num(s.lrate2);
+ o.prSale=o.price*(1-o.prom);o.prSup=o.supply*(1-o.prom);
+ o.prCm=o.prSup-o.prSup*o.lrate2-o.cost-o.sga1;o.prCmr=o.prSup?o.prCm/o.prSup:0;
  o.p100=o.weight>0?o.price/o.weight*100:0;
  o.once=bc||dm;
  o.tsales=o.sales*o.baseqty;o.tcm=o.cm*o.baseqty;
@@ -198,19 +219,21 @@ function driver(d,isBase){
  if(mx<0.5)return '차이 없음';
  var r=Math.round(v[ix]);
  return DRV[ix]+' '+(r>0?'+':'')+r.toLocaleString('ko-KR')+'원'+(v[ix]>0?'(이익 증가)':'(이익 감소)')}
-// 예시 데이터 (가상 값. 테스트 기준 + 보관함 예시). 구성품: [이름, 단가, 수량, 내용량g]
+// 예시 블록 (테스트 기준 + 보관함 예시). 구성품: [이름, 단가, 수량, 내용량g]
 function C(list){return list.map(function(a){return {n:a[0],p:a[1],q:a[2],w:a[3]}})}
 function mk(o){var s=newSc(),k;for(k in o)s[k]=o[k];return s}
 function R(n,b,x,r){return {n:n,b:b,x:x,r:r}}
 var NOR=R('','',1,0);
 var EX=[
- {id:'g1',ch:'방송',exp:7098.94,title:'김 세트',sc:mk({name:'1안 김 원가 1,950원',chname:'채널 가',price:70900,commrate:0.35,target:3800,tax:'과세',temp:'상온',size:'소형',comps:C([['캔 김 30g (부자재 포함)',1950,16,30]]),roy:[R('IP 가','원가합계',1,0.027),NOR,R('밴더','공급가',1,0.018)],fix:{vcr:0,gma:0,cook:300000,mat:200000,panel:90000,fetc:0}})},
- {id:'g2',ch:'방송',exp:5034.14,title:'김 세트',sc:mk({name:'2안 원가 2,100원·박스 600원',chname:'채널 가',price:70900,commrate:0.35,target:3800,tax:'과세',temp:'상온',size:'소형',comps:C([['캔 김 30g (부자재 포함)',2100,16,30]]),roy:[R('IP 가','원가합계',1,0.027),NOR,R('밴더','공급가',1,0.018)],fix:{vcr:0,gma:0,cook:300000,mat:200000,panel:90000,fetc:0},iov:{1:{p:600}}})},
- {id:'jb',ch:'방송',exp:9966.6,title:'셀럽 가 족발',sc:mk({name:'족발 / 채널 다 (데이터)',btype:'데이터',chname:'채널 다',price:60900,commrate:0.36,target:2100,tax:'과세',temp:'냉동',size:'소형',comps:C([['순살 족발 200G',2700,6,200],['미니족 250G',2700,2,250]]),roy:[R('셀럽 가','공급가',1,0.0225),NOR,R('에이전시','공급가',1,0.009)],fix:{vcr:0,gma:4000000,cook:700000,mat:200000,panel:90000,fetc:0}})},
- {id:'hu',ch:'방송',exp:12989,title:'예시 갈비+사리',sc:mk({name:'갈비7+감자사리3 / 채널 나',chname:'채널 나',price:140000,commrate:0.34,target:2100,tax:'과세',temp:'냉동',size:'중형',comps:C([['갈비 300G',8000,7,300],['감자사리면 180G',800,3,180]]),ars:5000,roy:[R('IP 나','판매가(VAT포함)',0.6,0.036),NOR,R('밴더','공급가',1,0.018)],fix:{vcr:0,gma:1500000,cook:1000000,mat:200000,panel:90000,fetc:0}})},
- {id:'cb',ch:'방송',exp:7502.74,title:'IP 다 굴비',sc:mk({name:'굴비 / 채널 라 (데이터)',btype:'데이터',chname:'채널 라',price:65900,commrate:0.3,target:1500,tax:'면세',temp:'냉동',size:'선물',comps:C([['굴비 120G * 8미',30900,1,960],['사은품',100,8,0]]),roy:[R('IP 다','원가합계',1,0.0477),NOR,R('에이전시','공급가',1,0.009)],fix:{vcr:0,gma:0,cook:1100000,mat:200000,panel:90000,fetc:0},shipq:1})},
- {id:'yg',ch:'공구',exp:8284,title:'예시 야채찜',sc:mk({name:'야채찜 / 공구',chname:'공동구매',price:60900,commrate:0.24,tax:'면세',temp:'냉동',size:'소형',comps:C([['야채찜 230G',2200,15,230]]),iov:{0:{p:850}}})},
- {id:'ym',ch:'미리주문',exp:7262,title:'예시 야채찜',sc:mk({name:'야채찜 / 채널 나 미리주문',chname:'채널 나',price:40900,commrate:0.32,tax:'면세',temp:'냉동',size:'소형',comps:C([['야채찜 230G',2200,7,230]])})}
+ {id:'g1',ch:'방송',exp:7098.936364,title:'김 세트',sc:mk({name:'1안 김 원가 1,950원',chname:'채널 가',price:70900,commrate:0.35,target:3800,tax:'과세',temp:'상온',comps:C([['캔 김 30g (부자재 포함)',1950,16,30]]),roy:[R('IP 가','원가합계',1,0.027),NOR,R('밴더','공급가',1,0.018)],fix:{vcr:0,gma:0,cook:300000,mat:200000,panel:90000,fetc:0}})},
+ {id:'g2',ch:'방송',exp:5034.136364,title:'김 세트',sc:mk({name:'2안 원가 2,100원·박스 600원',chname:'채널 가',price:70900,commrate:0.35,target:3800,tax:'과세',temp:'상온',comps:C([['캔 김 30g (부자재 포함)',2100,16,30]]),roy:[R('IP 가','원가합계',1,0.027),NOR,R('밴더','공급가',1,0.018)],fix:{vcr:0,gma:0,cook:300000,mat:200000,panel:90000,fetc:0},iov:{3:{p:600}}})},
+ {id:'jb',ch:'방송',exp:9966.596364,title:'셀럽 가 족발',sc:mk({name:'족발 / 채널 다 (데이터)',btype:'데이터',chname:'채널 다',price:60900,commrate:0.36,target:2100,tax:'과세',temp:'냉동',comps:C([['순살 족발 200G',2700,6,200],['미니족 250G',2700,2,250]]),roy:[R('셀럽 가','공급가',1,0.0225),NOR,R('에이전시','공급가',1,0.009)],fix:{vcr:0,gma:4000000,cook:700000,mat:200000,panel:90000,fetc:0}})},
+ {id:'hu',ch:'방송',exp:12989,title:'예시 갈비+사리',sc:mk({name:'갈비7+감자사리3 / 채널 나',chname:'채널 나',price:140000,commrate:0.34,target:2100,tax:'과세',temp:'냉동',comps:C([['갈비 300G',8000,7,300],['감자사리면 180G',800,3,180]]),ars:5000,roy:[R('IP 나','판매가(VAT포함)',0.6,0.036),NOR,R('밴더','공급가',1,0.018)],fix:{vcr:0,gma:1500000,cook:1000000,mat:200000,panel:90000,fetc:0},iov:{1:{p:1110},5:{p:114},7:{p:637}}})},
+ {id:'cb',ch:'방송',exp:7502.74,title:'IP 다 굴비',sc:mk({name:'굴비 / 채널 라 (데이터)',btype:'데이터',chname:'채널 라',price:65900,commrate:0.3,target:1500,tax:'면세',temp:'냉동',comps:C([['굴비 120G * 8미',30900,1,960],['사은품',100,8,0]]),roy:[R('IP 다','원가합계',1,0.0477),NOR,R('에이전시','공급가',1,0.009)],fix:{vcr:0,gma:0,cook:1100000,mat:200000,panel:90000,fetc:0},shipq:1,iov:{0:{p:0},1:{p:1400,q:1},4:{p:150,q:8},5:{q:0},6:{q:0},7:{q:0}}})},
+ {id:'yg',ch:'공구',exp:8284,title:'예시 야채찜',sc:mk({name:'야채찜 / 공구',chname:'공동구매',price:60900,commrate:0.24,tax:'면세',temp:'냉동',comps:C([['야채찜 230G',2200,15,230]]),iov:{0:{p:850}}})},
+ {id:'ym',ch:'B2C',exp:7262,title:'예시 야채찜',sc:mk({name:'야채찜 / 채널 나 미리주문',chname:'채널 나',price:40900,commrate:0.32,tax:'면세',temp:'냉동',comps:C([['야채찜 230G',2200,7,230]])})},
+ {id:'dm',ch:'직매입',exp:-664.325,title:'직매입 예시 (스테이크 150g)',sc:mk({name:'직매입 1팩 19,900원 (원가 +5.3%)',chname:'채널 마진 42%',price:20900,commrate:0.41,target:1100,tax:'과세',temp:'냉동',comps:C([['스테이크 150g',10425,1,150]]),markup:0.053,prom:0.15})},
+ {id:'bc',ch:'B2C',exp:2385.209091,title:'B2C 예시 (부대찌개 네이버)',sc:mk({name:'네이버 1팩 9,900원',chname:'네이버',price:10900,commrate:0.0563,tax:'과세',temp:'냉동',comps:C([['부대찌개 600g',2350,1,600]]),shipp:4616,iov:{0:{q:0},1:{q:0},5:{q:0},6:{q:0},7:{q:0},8:{q:0}}})}
 ];
 function selfTest(ST){
  ST=ST||DEF_ST;var out=[];
@@ -221,15 +244,15 @@ function selfTest(ST){
 /*ENGINE_END*/
 
 // ---------- 상태 / 저장 ----------
-var KEY='plx_web_v5',V4KEY='plx_web_v4',V3KEY='plx_web_v3';
-var ui={tab:'work',kakao:'',msg:'',open:{}};
+var KEY='plx_web_v5',V4KEY='plx_web_v4',V3KEY='plx_web_v3',MV=13;
+var ui={tab:'work',kakao:'',msg:'',open:{},vi:0};
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function today(){var d=new Date();return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)}
 function exSaved(){
  var L=[{name:'예시) 김 1안 vs 2안',ts:'예시',data:{ch:'방송',title:'김 세트',memo:'',base:0,sc:[EX[0].sc,EX[1].sc]}}];
  EX.slice(2).forEach(function(e){L.push({name:'예시) '+e.sc.name,ts:'예시',data:{ch:e.ch,title:e.title,memo:'',base:0,sc:[e.sc]}})});
  return clone(L)}
-// v0.10: 왼쪽 공통값은 과세·품온뿐. 방송 형태·채널명·판매가·수수료율·목표수량·구성은 안(표)마다 직접 입력.
+// 왼쪽 공통값은 과세·품온뿐. 방송 형태·채널명·판매가·수수료율·목표수량·구성은 안(표)마다 직접 입력.
 function newInfo(){return {tax:'과세',temp:'냉동'}}
 // 어떤 저장 형식(v1·v3·v4)이든 v5(안별 전체 값 + 공통 과세·품온)로 변환
 function adopt(d){
@@ -243,11 +266,26 @@ function adopt(d){
    delete s.cov});
   info={tax:I.tax,temp:I.temp}}
  else info=d.info?{tax:d.info.tax,temp:d.info.temp}:{tax:b.tax||'과세',temp:b.temp||'냉동'};
- sc.forEach(function(s){if(!s.comps||!s.comps.length)s.comps=[newComp()];['price','commrate','target'].forEach(function(k){if(isNil(s[k]))s[k]=0})});
+ sc.forEach(function(s){if(!s.comps||!s.comps.length)s.comps=[newComp()]});
  return {info:info,sc:sc}}
 function eff(s){var e=Object.assign({},s),I=state.info;e.tax=I.tax;e.temp=I.temp;return e}
-function upgrade(s){if(s.ver!==5||!s.info||s.info.comps){var ad=adopt({base:s.base||0,sc:s.sc,info:s.info});s.info=ad.info;s.sc=ad.sc}s.ver=5;return s}
-function fresh(){var ad=adopt({base:0,sc:[EX[0].sc,EX[1].sc]});return {ver:5,ch:'방송',title:'김 세트',memo:'',base:0,info:ad.info,sc:ad.sc,ST:clone(DEF_ST),saved:exSaved()}}
+// 옛 저장본 정리: 미리주문->B2C, 냉장->냉동, 상온의 옛 '박스' 칸(1번)->카톤박스(3번)
+function migOld(d){
+ if(d.ch==='미리주문')d.ch='B2C';
+ if(d.info&&d.info.temp==='냉장')d.info.temp='냉동';
+ if(d.info&&d.info.temp==='상온')(d.sc||[]).forEach(function(s){if(s.iov&&s.iov[1]&&!s.iov[3]){s.iov[3]=s.iov[1];delete s.iov[1]}})}
+// 옛 고정값(물류사 가 단일)을 물류사 목록 구조로 변환
+function upgradeST(st){
+ if(st.vendors&&st.vendors.length){if(isNil(st.dmlog))st.dmlog=DEF_ST.dmlog;if(isNil(st.dmlog2))st.dmlog2=DEF_ST.dmlog2;return st}
+ var n=clone(DEF_ST);if(st.vat)n.vat=st.vat;if(st.conv)n.conv=st.conv;
+ if(!isNil(st.ship))n.vendors[0].ship=st.ship;if(!isNil(st.stor))n.vendors[0].stor=st.stor;return n}
+function upgrade(s){
+ if(s.ver!==5||!s.info||s.info.comps){var ad=adopt({base:s.base||0,sc:s.sc,info:s.info});s.info=ad.info;s.sc=ad.sc}
+ s.ver=5;s.ST=upgradeST(s.ST||{});if(!s.saved)s.saved=[];
+ if(!s.mv){migOld(s);s.saved.forEach(function(x){if(x.data)migOld(x.data)});
+  s.saved=s.saved.filter(function(x){return !/^예시\) /.test(x.name)}).concat(exSaved());s.mv=MV}
+ return s}
+function fresh(){return {ver:5,mv:MV,ch:'방송',title:'',memo:'',base:0,info:newInfo(),sc:[newSc()],ST:clone(DEF_ST),saved:exSaved()}}
 function loadState(){
  try{var t=localStorage.getItem(KEY);if(t){var s=JSON.parse(t);if(s&&s.ver===5&&s.sc&&s.sc.length)return upgrade(s)}}catch(e){}
  try{var t4=localStorage.getItem(V4KEY);if(t4){var s4=JSON.parse(t4);if(s4&&s4.ver===4&&s4.sc&&s4.sc.length)return upgrade(s4)}}catch(e){}
@@ -263,8 +301,8 @@ function sgn(n){var r=Math.round(+n||0);return r===0?'0':(r>0?'+':'')+r.toLocale
 function pc(n,d){return ((+n||0)*100).toFixed(d==null?1:d)+'%'}
 function disp(v,t){if(isNil(v))return '';if(t==='p')return String(Math.round(v*10000)/100);return (+v).toLocaleString('ko-KR',{maximumFractionDigits:2})}
 function setPath(o,p,v){var k=p.split('.'),i;for(i=0;i<k.length-1;i++){if(o[k[i]]==null)o[k[i]]={};o=o[k[i]]}o[k[k.length-1]]=v}
-// 노랑 = 직접 입력 / 하늘색 = 자동값(비우면 자동, 입력하면 덮어씀)
-function N(p,v,t,u){t=t||'n';return '<input class="in y" inputmode="decimal" data-p="'+p+'" data-t="'+t+'" value="'+disp(v,t)+'">'+(u?'<em>'+u+'</em>':'')}
+// 노랑 = 직접 입력 (ph를 주면 비워 둘 수 있고 "예: ..." 안내가 보임) / 하늘색 = 자동값(비우면 자동, 입력하면 덮어씀)
+function N(p,v,t,u,ph){t=t||'n';return '<input class="in y" inputmode="decimal"'+(ph!=null?' data-nul="1" placeholder="'+esc(ph)+'"':'')+' data-p="'+p+'" data-t="'+t+'" value="'+disp(v,t)+'">'+(u?'<em>'+u+'</em>':'')}
 function NS(p,v,auto,t){t=t||'n';return '<input class="in sky" inputmode="decimal" data-nul="1" data-p="'+p+'" data-t="'+t+'" value="'+disp(v,t)+'" placeholder="'+disp(auto,t)+'">'}
 function TX(p,v,ph,cls){return '<input class="in y tx'+(cls?' '+cls:'')+'" data-p="'+p+'" data-t="s" value="'+esc(v)+'" placeholder="'+esc(ph||'')+'">'}
 function SEL(p,v,opts,cls,first,labels){
@@ -276,6 +314,9 @@ function RS(l,v,cls,k){return '<div class="res'+(k?' k':'')+'"><span>'+l+'</span
 function nm(i){return state.sc[i].name||((i+1)+'안')}
 function row(l,h){return '<div class="r"><span>'+l+'</span><div class="c">'+h+'</div></div>'}
 function sx(k,t,sum,body,def){var op=ui.open[k];if(op===undefined)op=def;return '<details class="sx" data-k="'+k+'"'+(op?' open':'')+'><summary><span>'+t+'</span><b>'+sum+'</b></summary><div class="bd">'+body+'</div></details>'}
+function ib(a,e,l,x){return '<button class="ib" data-a="'+a+'" title="'+l+'" aria-label="'+l+'"'+(x||'')+'><span class="e">'+e+'</span><span class="l">'+l+'</span></button>'}
+// 비교에 포함할 안 (기준안은 항상 포함)
+function incl(){return state.sc.map(function(s,i){return i}).filter(function(i){return i===state.base||state.sc[i].exc!==1})}
 
 function compute(){
  var os=state.sc.map(function(s){return calcSc(eff(s),state.ch,state.ST)});
@@ -285,73 +326,91 @@ function compute(){
  return os}
 
 // ---------- 작업대: 오른쪽 카드 ----------
-var COMM={'방송':'채널 수수료율','미리주문':'채널 수수료율','B2C':'마켓 수수료율','직매입':'채널 마진율 (확인 필요)','공구':'채널 수수료율'};
+var COMM={'방송':'채널 수수료율','B2C':'마켓 수수료율','직매입':'채널 마진율 (판매가 대비)','공구':'채널 수수료율'};
+var CHPH={'방송':'예: 채널 가','B2C':'예: 네이버 스마트스토어','직매입':'예: 대형마트 A','공구':'예: 공동구매 채널'};
 function kpi(l,cm,r){var c=cm<0?' neg':'';return '<div class="kpi"><div><div class="kl">'+l+'</div><div class="kv'+c+'">'+fmt(cm)+'<small>원</small></div></div><div><div class="kl">CM%</div><div class="kv'+c+'">'+pc(r,1)+'</div></div></div>'}
-function card(i,o){
- var s=state.sc[i],ch=state.ch,P='sc.'+i+'.',bc=ch==='방송',dm=ch==='직매입',b2=ch==='B2C',isb=i===state.base,K='c'+i+'_',e=eff(s),h,b;
+function card(i,o,multi){
+ var s=state.sc[i],ch=state.ch,P='sc.'+i+'.',bc=ch==='방송',dm=ch==='직매입',b2=ch==='B2C',isb=i===state.base,K='c'+i+'_',e=eff(s),ST=state.ST,vd=vendorOf(ST,s),h,b;
  var chip=isb?'<span class="tag">기준안</span>':'<span class="chip2 '+(o.d.cm>=0?'up':'dn')+'">기준 대비 '+sgn(o.d.cm)+'원</span>';
  h='<div class="card'+(isb?' base':'')+'">'
-  +'<button class="cdel" title="이 표 삭제" data-a="del" data-i="'+i+'"'+(state.sc.length>1?'':' disabled')+'>삭제 ×</button>'
+  +(multi?'<label class="cinc nocap" title="구성 가격 비교와 기준 대비에 이 안을 포함"><input type="checkbox" data-a="inc" data-i="'+i+'"'+(isb||s.exc!==1?' checked':'')+(isb?' disabled':'')+'> 비교 포함</label>':'')
+  +'<button class="cdel nocap" title="이 표 삭제" data-a="del" data-i="'+i+'"'+(state.sc.length>1?'':' disabled')+'>삭제 ×</button>'
   +kpi((o.rep?'1회차 ':'')+(o.once?'세트당 ':'개당 ')+'공헌이익',o.cm,o.cmr)+(o.rep?kpi('2회차~ 세트당 공헌이익 (고정비 제외)',o.cm2,o.cmr2):'')
-  +'<div class="ks">'+(isb?'':chip)+'<span>100g당 '+(o.p100>0?fmt(o.p100)+'원':'내용량 입력 필요')+'</span>'+(o.once?'<span>1회 총 CM '+fmt(o.tcm)+'원</span>':'')+(bc&&o.bepo>0?'<span>BEP 주문 '+fmt(o.bepo)+'개</span>':'')+'</div>'
-  +((dm||b2)?'<div class="warn">'+(dm?'직매입':'B2C')+' 비용 항목이 아직 확정되지 않아 임시 계산입니다.</div>':'');
+  +'<div class="ks">'+(isb?'':chip)+'<span>100g당 '+(o.p100>0?fmt(o.p100)+'원':'내용량 입력 필요')+'</span>'+(o.once?'<span>1회 총 CM '+fmt(o.tcm)+'원</span>':'')+(bc&&o.bepo>0?'<span>BEP 주문 '+fmt(o.bepo)+'개</span>':'')+'</div>';
  // 1) 상품 정보·판매 (이 표만의 값)
  b=(bc?row('방송 형태',SEL(P+'btype',s.btype,BTYPES)):'')
-  +row('채널명',TX(P+'chname',s.chname,'예: 채널 가'))
-  +row('판매가 (VAT 포함)',N(P+'price',s.price,'n','원'))
-  +row(COMM[ch],N(P+'commrate',s.commrate,'p','%'))
-  +((bc||dm)?row(bc?'목표 수량 (1회)':'발주 수량 (1회)',N(P+'target',s.target,'n','개')):'')
-  +(b2?row('광고비율 (매출 대비)',N(P+'adrate',s.adrate,'p','%')):'')
-  +(dm?row('1회 고정비 (운송·입고)',N(P+'dmfix',s.dmfix,'n','원')):'');
- h+=sx(K+'a','상품 정보·판매','판매가 '+fmt(o.price)+'원 · 수수료 '+pc(e.commrate,0),b,true);
+  +row('채널명',TX(P+'chname',s.chname,CHPH[ch]))
+  +row('판매가 (VAT 포함)',N(P+'price',s.price,'n','원','예: 59,900'))
+  +row(COMM[ch],N(P+'commrate',s.commrate,'p','%',dm?'예: 42':'예: 36'))
+  +((bc||dm)?row(bc?'목표 수량 (1회)':'발주 수량 (1회)',N(P+'target',s.target,'n','개','예: 2,000')):'')
+  +(b2?row('광고비율 (매출 대비)',N(P+'adrate',s.adrate,'p','%','예: 3')):'')
+  +row('원가 가산율',N(P+'markup',s.markup,'p','%','예: 5.3'))
+  +(dm?'<div class="note">공급가 = 판매가 ÷ 1.1 x (1 - 마진율) = <b>'+fmt(o.supply)+'원</b></div>':'');
+ h+=sx(K+'a','상품 정보·판매','판매가 '+fmt(o.price)+'원 · '+(dm?'마진 ':'수수료 ')+pc(e.commrate,0),b,true);
  // 2) 구성 (이 표만의 견적 원가)
- b='<div class="note">견적 단가·수량과 1개당 내용량(g)을 넣으면 원가와 100g당 가격이 계산됩니다.</div>';
+ b='<div class="note">견적 단가·수량과 1개당 내용량(g)을 넣으면 원가와 100g당 가격이 계산됩니다. 원가 가산율을 넣으면 합계에 곱해집니다.</div>';
  s.comps.forEach(function(c,j){var Q=P+'comps.'+j+'.';
-  b+='<div class="cp"><div class="top2">'+TX(Q+'n',c.n,'구성품 '+(j+1)+' 이름')+(s.comps.length>1?'<button class="mini" data-a="delcomp" data-i="'+i+'" data-j="'+j+'">삭제</button>':'')+'</div>'
-   +'<div class="l3"><label>단가 (원)<span class="f">'+N(Q+'p',c.p)+'</span></label><label>수량<span class="f">'+N(Q+'q',c.q)+'</span></label><label>내용량 (g, 1개)<span class="f">'+N(Q+'w',c.w)+'</span></label></div>'
+  b+='<div class="cp"><div class="top2">'+TX(Q+'n',c.n,j?'구성품 '+(j+1)+' 이름':'예: 캔 김 30g')+(s.comps.length>1?'<button class="mini nocap" data-a="delcomp" data-i="'+i+'" data-j="'+j+'">삭제</button>':'')+'</div>'
+   +'<div class="l3"><label>단가 (원)<span class="f">'+N(Q+'p',c.p,'n','','예: 2,000')+'</span></label><label>수량<span class="f">'+N(Q+'q',c.q,'n','','예: 16')+'</span></label><label>내용량 (g, 1개)<span class="f">'+N(Q+'w',c.w,'n','','예: 30')+'</span></label></div>'
    +'<div class="sub">'+fmt(num(c.p)*num(c.q))+'원 · '+fmt(num(c.w)*num(c.q))+'g</div></div>'});
- if(s.comps.length<8)b+='<button class="add" data-a="addcomp" data-i="'+i+'">+ 구성품 추가</button>';
+ if(s.comps.length<8)b+='<button class="add nocap" data-a="addcomp" data-i="'+i+'">+ 구성품 추가</button>';
  h+=sx(K+'b','구성 (견적 원가)','원가 '+fmt(o.cost)+'원 · '+(o.weight>0?fmt(o.weight)+'g':'g 미입력'),b,true);
  // 3) 판관비 1
- b=row('프로모션 ARS',N(P+'ars',s.ars,'n','원'))+row('프로모션 기타·쿠폰',N(P+'petc',s.petc,'n','원'));
+ b=row('프로모션 ARS',N(P+'ars',s.ars,'n','원','예: 5,000'))+row('프로모션 기타·쿠폰',N(P+'petc',s.petc,'n','원','예: 10,000'));
  ['로열티 1','로열티 2','밴더'].forEach(function(l,j){var Q=P+'roy.'+j+'.',r=s.roy[j];
-  b+='<div class="ry"><div class="r"><span>'+l+'</span>'+TX(Q+'n',r.n,'대상 (IP·셀럽·밴더)')+'</div><div class="l2">'
-   +SEL(Q+'b',r.b,ROY_BASES,'y','(기준 선택)')+' x'+N(Q+'x',r.x,'p','%')+' 요율'+N(Q+'r',r.r,'p','%')+'<span class="am">'+fmt(o.ra[j])+'원</span></div></div>'});
+  b+='<div class="ry"><div class="r"><span>'+l+'</span>'+TX(Q+'n',r.n,'예: IP·셀럽·밴더')+'</div><div class="l2">'
+   +SEL(Q+'b',r.b,ROY_BASES,'y','(기준 선택)')+' x'+N(Q+'x',r.x,'p','')+' 요율'+N(Q+'r',r.r,'p','','예: 3')+'<span class="am">'+fmt(o.ra[j])+'원</span></div></div>'});
  h+=sx(K+'c','판관비 1','-'+fmt(o.sga1)+'원',b,false);
  // 4) 판관비 2 (방송만)
  if(bc){
-  b='';[['vcr','VCR촬영비'],['gma','거마비'],['cook','요리팀비'],['mat','재료비'],['panel','판넬비'],['fetc','기타(동판비 등)']].forEach(function(a){b+=row(a[1],N(P+'fix.'+a[0],s.fix[a[0]],'n','원'))});
+  b='';[['vcr','VCR촬영비'],['gma','거마비'],['cook','요리팀비'],['mat','재료비'],['panel','판넬비'],['fetc','기타(동판비 등)']].forEach(function(a){b+=row(a[1],N(P+'fix.'+a[0],s.fix[a[0]],'n','원','예: 300,000'))});
   h+=sx(K+'d','판관비 2 (방송 고정비)',fmt(o.fixtot)+'원 / 1회 (세트당 -'+fmt(o.fixset)+')',b,false)}
- // 5) 물류·포장 (팜조아 기본값)
- b=row('포장 크기',SEL(P+'size',s.size,SIZES))
-  +'<div class="note">팜조아 물류비 기본값: '+esc(o.packKey)+(o.packFound?'':' (설정 탭에 값 없음 - 0원 처리)')+' · 임시값</div>'
-  +row('택배비 단가 / 수량',NS(P+'shipp',s.shipp,o.shipp)+NS(P+'shipq',s.shipq,o.shipqA))
-  +row('보관료 '+pc(state.ST.stor,1)+' 적용','<input type="checkbox" data-p="'+P+'ston" data-t="c"'+(s.ston?' checked':'')+'>')
-  +'<div class="kl" style="margin:8px 0 2px">포장 자재 단가 / 수량 (기본값, 수정 가능)</div>';
- ITEMS.forEach(function(it,k){var Q=P+'iov.'+k+'.',ov=(s.iov&&s.iov[k])||{};b+=row(it,NS(Q+'p',ov.p,o.items[k].pa)+NS(Q+'q',ov.q,o.items[k].qa))});
- h+=sx(K+'e','물류·포장','-'+fmt(o.logi)+'원',b,false);
- // 6) 손익 내역
- b=RS('세트 매출 (VAT 제외)',fmt(o.sales))+RS('채널 수수료','-'+fmt(o.comm))+RS('공급가',fmt(o.supply))
+ // 5) 물류
+ var vsel=row('물류사',SEL(P+'vendor',vd?vd.id:'',ST.vendors.map(function(v){return v.id}),'y',null,ST.vendors.map(function(v){return v.name})));
+ if(dm){
+  var plt=s.lmode==='plt';
+  b=row('물류비 방식',SEL(P+'lmode',plt?'plt':'rate',['rate','plt'],'y',null,['비율 (공급가 기준)','직납 상세 (파렛트)']));
+  if(!plt)b+=row('물류비율 (공급가 대비)',NS(P+'lrate',s.lrate,ST.dmlog,'p')+'<em>%</em>')+'<div class="note">기본 '+pc(ST.dmlog,0)+' (설정 탭). 행사 물류비율은 아래 "행사" 칸에서 따로 봅니다.</div>';
+  else b+=vsel+'<div class="note">'+esc(o.vname)+' 직납 견적 기준. 파렛트 수는 올림 없이 소수로 계산합니다.</div>'
+   +row('박스 입수 (박스당 개수)',N(P+'bq',s.bq,'n','개','예: 12'))+row('파렛트당 박스 수',N(P+'bp',s.bp,'n','박스','예: 80'))
+   +row('차량 수 (운송·상하차)',NS(P+'trk',s.trk,1)+'<em>대</em>')+row('기타 비용 (1회)',N(P+'dmfix',s.dmfix,'n','원','예: 0'))
+   +'<div class="note">파렛트 '+(o.pallets?o.pallets.toFixed(2):'0')+'개 · 박스 '+fmt(o.boxes)+'개 · 1회 물류비 '+fmt(o.pltTotal)+'원</div>';
+  h+=sx(K+'e','물류비 (직매입)','-'+fmt(o.logi)+'원 / 개',b,false);
+  // 6) 행사
+  b=row('행사 할인율 (판매가 기준)',N(P+'prom',s.prom,'p','%','예: 15'))+row('행사 물류비율',NS(P+'lrate2',s.lrate2,ST.dmlog2,'p')+'<em>%</em>');
+  if(o.prOn)b+=RS('행사 판매가 (VAT 포함)',fmt(o.prSale))+RS('행사 공급가',fmt(o.prSup))+RS('행사 CM',fmt(o.prCm),o.prCm<0?'neg':'',1)+RS('행사 CM% (공급가 대비)',pc(o.prCmr,1));
+  h+=sx(K+'g','행사 (선택)',o.prOn?'CM '+fmt(o.prCm)+'원 · '+pc(o.prCmr,1):'미적용',b,false)}
+ else{
+  b=vsel+'<div class="note">'+esc(o.vname)+' 견적 · '+o.temp+' 포장'+(o.packFound?'':' (이 물류사에 해당 품온 값 없음 - 0원 처리)')+'. 설정 탭에서 견적을 수정·추가합니다.</div>'
+   +row('택배비 단가 / 수량',NS(P+'shipp',s.shipp,o.shipp)+NS(P+'shipq',s.shipq,o.shipqA))
+   +row('보관료 '+pc(vd?vd.stor:0,1)+' 적용','<input type="checkbox" data-p="'+P+'ston" data-t="c"'+(s.ston?' checked':'')+'>')
+   +'<div class="kl" style="margin:8px 0 2px">포장 자재 단가 / 수량 (견적 기본값, 수정 가능)</div>';
+  o.items.forEach(function(t){var Q=P+'iov.'+t.k+'.',ov=(s.iov&&s.iov[t.k])||{};b+=row(t.label,NS(Q+'p',ov.p,t.pa)+NS(Q+'q',ov.q,t.qa))});
+  h+=sx(K+'e','물류·포장 ('+esc(o.vname)+')','-'+fmt(o.logi)+'원',b,false)}
+ // 7) 손익 내역
+ b=RS('세트 매출 (VAT 제외)',fmt(o.sales))+RS(dm?'채널 마진':'채널 수수료','-'+fmt(o.comm))+RS('공급가',fmt(o.supply))
   +RS('원가','-'+fmt(o.cost))+RS('판관비 1','-'+fmt(o.sga1))+(bc?RS('판관비 2 (고정비/수량)','-'+fmt(o.fixset)):'')+RS('물류비','-'+fmt(o.logi))
   +RS('공헌이익 (CM)',fmt(o.cm),o.cm<0?'neg':'',1);
  if(o.once)b+=RS('1회 총 매출',fmt(o.tsales))+RS('1회 총 CM',fmt(o.tcm),o.tcm<0?'neg':'');
  if(bc)b+=RS('1회차 / 2회차~ 총 CM',fmt(o.rd1)+' / '+fmt(o.rd2))+RS('4회 누적 총 CM',fmt(o.cum4));
- h+=sx(K+'f','손익 내역',pc(o.cmr,2),b,false);
+ h+=sx(K+'f','손익 내역',pc(o.cmr,2)+(dm?' (공급가 대비)':''),b,false);
  return h+'</div>'}
 
 // ---------- 카톡 요약 (~함/~임체) ----------
 function kakaoText(os){
- var L=['[손익 시뮬레이션 비교] '+today()+' / '+(state.title||'상품명 미입력')+' / '+CH_NAME[state.ch]],n=1,best=0;
- os.forEach(function(o,i){if(o.cmr>os[best].cmr)best=i});
- if(os.length>1)L.push((n++)+'. 결론: CM%가 가장 높은 안은 '+nm(best)+' ('+pc(os[best].cmr)+')임.');
- os.forEach(function(o,i){
+ var ix=incl(),L=['[손익 시뮬레이션 비교] '+today()+' / '+(state.title||'상품명 미입력')+' / '+CH_NAME[state.ch]],n=1,best=ix[0];
+ ix.forEach(function(i){if(os[i].cmr>os[best].cmr)best=i});
+ if(ix.length>1)L.push((n++)+'. 결론: CM%가 가장 높은 안은 '+nm(best)+' ('+pc(os[best].cmr)+')임.');
+ ix.forEach(function(i){var o=os[i];
   L.push((n++)+'. '+nm(i)+': '+(o.once?'세트당':'개당')+' CM '+fmt(o.cm)+'원('+pc(o.cmr)+')'
    +(o.rep?', 2회차~ '+fmt(o.cm2)+'원('+pc(o.cmr2)+')':'')+(o.once?', 1회 총 CM '+fmt(o.tcm/10000)+'만원':'')+(o.p100>0?', 100g당 '+fmt(o.p100)+'원':'')
+   +(o.prOn?', 행사(-'+pc(o.prom,0)+') CM '+fmt(o.prCm)+'원('+pc(o.prCmr)+')':'')
    +(i!==state.base&&Math.round(o.d.cm)!==0?' / 기준 대비 '+sgn(o.d.cm)+'원, 주원인 '+o.drv:'')+'.')});
  var b=os[state.base],sb=eff(state.sc[state.base]);
- L.push('가정: '+(sb.chname||CH_NAME[state.ch])+' 수수료율 '+pc(sb.commrate,0)
-  +(state.ch==='방송'?', '+sb.btype+', 전환율 '+pc(state.ST.conv,0):'')+', '+b.tax+'·'+b.temp+', 물류비 팜조아 임시값, 기준안 '+nm(state.base)+'임.');
- if(state.ch==='직매입'||state.ch==='B2C')L.push('주의: '+state.ch+' 비용 항목 미확정으로 임시 계산임.');
+ L.push('가정: '+(sb.chname||CH_NAME[state.ch])+(state.ch==='직매입'?' 마진율 ':' 수수료율 ')+pc(sb.commrate,0)
+  +(state.ch==='방송'?', '+sb.btype+', 전환율 '+pc(state.ST.conv,0):'')+', '+b.tax+'·'+b.temp
+  +(state.ch==='직매입'&&sb.lmode==='plt'?', 물류 직납 상세('+b.vname+' 견적)':state.ch==='직매입'?', 물류비 공급가 '+pc(b.lrate,0):', 물류비 '+b.vname+' 견적')
+  +', 기준안 '+nm(state.base)+'임.');
  return L.join('\n')}
 
 // ---------- 작업대 화면 ----------
@@ -371,52 +430,59 @@ function savedOpts(){
 function infoPanel(){
  var I=state.info;
  return '<div class="t">상품 정보</div>'+row('과세 구분',SEL('info.tax',I.tax,['과세','면세']))+row('품온',SEL('info.temp',I.temp,TEMPS))}
-// 안(표)끼리 판매가·구성 가격을 나란히 보는 표. 안 이름 수정·기준안 지정은 여기서, 표 삭제는 각 표 오른쪽 위.
-function cmpTable(os){
+// 안(표)끼리 판매가·구성 가격을 나란히 보는 표 (비교 포함으로 고른 안만). 안 이름 수정·기준안 지정은 여기서.
+function cmpTable(os,ix){
  var b=os[state.base],bc=state.ch==='방송',dm=state.ch==='직매입',es=state.sc.map(eff),mx=0,
- h='<div class="box cmpt"><div class="bt">구성 가격 비교 <span style="font-weight:400;color:var(--tx3);font-size:11px">안 이름 수정·기준안 지정은 여기서 · 표 삭제는 각 표 오른쪽 위</span></div><div class="sc"><table><thead><tr><th></th>';
- es.forEach(function(e){mx=Math.max(mx,e.comps.length)});
- os.forEach(function(o,i){h+='<th><input class="nmi" data-p="sc.'+i+'.name" data-t="s" placeholder="'+(i+1)+'안 이름" value="'+esc(state.sc[i].name)+'"><div>'+(i===state.base?'<span class="tag">기준안</span>':'<button class="lnk" data-a="base" data-i="'+i+'">기준으로 지정</button>')+'</div></th>'});
+ h='<div class="box cmpt" id="capcmp"><div class="bt">구성 가격 비교 <span style="font-weight:400;color:var(--tx3);font-size:11px">'+esc(state.title||'')+' · 안 이름 수정·기준안 지정은 여기서</span></div><div class="sc"><table><thead><tr><th></th>';
+ ix.forEach(function(i){mx=Math.max(mx,es[i].comps.length)});
+ ix.forEach(function(i){h+='<th><input class="nmi" data-p="sc.'+i+'.name" data-t="s" placeholder="'+(i+1)+'안 이름" value="'+esc(state.sc[i].name)+'"><div>'+(i===state.base?'<span class="tag">기준안</span>':'<button class="lnk nocap" data-a="base" data-i="'+i+'">기준으로 지정</button>')+'</div></th>'});
  h+='</tr></thead><tbody>';
  function dl(d,i,cost){if(i===state.base)return '';var r=Math.round(d);if(!r)return '';return ' <small class="'+((cost?d>0:d<0)?'neg':'pos')+'">'+sgn(d)+'</small>'}
- function line(label,fn){h+='<tr><td>'+label+'</td>';os.forEach(function(o,i){h+='<td>'+fn(o,i)+'</td>'});h+='</tr>'}
+ function line(label,fn){h+='<tr><td>'+label+'</td>';ix.forEach(function(i){h+='<td>'+fn(os[i],i)+'</td>'});h+='</tr>'}
  line('채널 / 방송 형태',function(o,i){return esc(es[i].chname||'-')+(bc?' · '+esc(es[i].btype):'')});
  line('판매가 (VAT 포함)',function(o){return fmt(o.price)+'원'});
- line('수수료율',function(o,i){return pc(es[i].commrate,0)});
+ line(dm?'채널 마진율':'수수료율',function(o,i){return pc(es[i].commrate,0)});
+ if(dm)line('공급가',function(o){return fmt(o.supply)+'원'});
  if(bc||dm)line(bc?'목표 수량':'발주 수량',function(o,i){return fmt(es[i].target)+'개'});
  for(var j=0;j<mx;j++)(function(j){line('구성 '+(j+1),function(o,i){var x=es[i].comps[j];return x?'<span class="cn" data-bind="cc'+i+'_'+j+'">'+esc(x.n||('구성품 '+(j+1)))+'</span>'+fmt(x.p)+' x '+fmt(x.q)+' = <b>'+fmt(num(x.p)*num(x.q))+'</b>':'-'})})(j);
+ if(ix.some(function(i){return num(es[i].markup)>0}))line('원가 가산율',function(o,i){return pc(es[i].markup,1)});
  line('<b>원가 합계</b>',function(o,i){return '<b>'+fmt(o.cost)+'</b>원'+dl(o.cost-b.cost,i,true)});
  line('원가율 (원가 / 세트 매출)',function(o){return pc(o.sales?o.cost/o.sales:0,1)});
  line('100g당 판매가',function(o){return o.p100>0?fmt(o.p100)+'원':'-'});
+ line('물류비',function(o){return fmt(o.logi)+'원'});
  line('<b>세트당 CM</b>',function(o,i){return '<b>'+fmt(o.cm)+'</b>원'+dl(o.cm-b.cm,i,false)});
- line('CM%',function(o){return pc(o.cmr,1)});
- if(os.some(function(o){return o.rep})){
+ line('CM%'+(dm?' (공급가 대비)':''),function(o){return pc(o.cmr,1)});
+ if(ix.some(function(i){return os[i].rep})){
   line('<b>2회차~ 세트당 CM</b>',function(o,i){return '<b>'+fmt(o.cm2)+'</b>원'+dl(o.cm2-b.cm2,i,false)});
   line('2회차~ CM%',function(o){return pc(o.cmr2,1)})}
  return h+'</tbody></table></div></div>'}
+function vsBoxes(os,ix){
+ var h='';
+ ix.forEach(function(i){
+  if(i===state.base)return;
+  var o=os[i],d=o.d,rows=[['공급가 (판매가·수수료)',d.sup],['원가',d.cost],['판관비 1 (로열티 등)',d.sga1],['판관비 2 (방송 고정비)',d.fix],['물류비',d.logi]],r='',mx=1;
+  rows.forEach(function(x){mx=Math.max(mx,Math.abs(x[1]))});
+  rows.forEach(function(x){if(Math.abs(x[1])>=0.5)r+='<div class="bar2"><span>'+x[0]+'</span><div class="tr"><i class="'+(x[1]>0?'p':'n')+'" style="width:'+(Math.abs(x[1])/mx*50)+'%"></i></div><b class="'+(x[1]>0?'pos':'neg')+'">'+sgn(x[1])+'원</b></div>'});
+  h+='<div class="box"><div class="bt"><span data-bind="nm'+i+'">'+esc(nm(i))+'</span> vs 기준 <span data-bind="nm'+state.base+'">'+esc(nm(state.base))+'</span>: 세트당 '+sgn(d.cm)+'원 (CM% '+(d.cmr>=0?'+':'')+(d.cmr*100).toFixed(2)+'%p)</div>'+(r||'<div style="color:var(--tx2)">차이 없음</div>')+'</div>'});
+ return h}
 function work(os){
- var b=os[state.base],h,i;
+ var b=os[state.base],ix=incl(),multi=os.length>1,h,i;
  h=''
   +(ui.kakao?'<div class="pop"><div class="bt">카톡 보고용 요약</div><textarea readonly id="kt">'+esc(ui.kakao)+'</textarea><div style="margin-top:8px;display:flex;gap:8px"><button class="btn" data-a="copy">복사</button><button class="btn" data-a="kclose">닫기</button></div></div>':'')
   +(ui.msg?'<div class="pop">'+ui.msg+'</div>':'');
  h+='<div class="split"><div class="left">'
-  +'<div class="t">상품명</div><input class="in y" data-p="title" data-t="s" value="'+esc(state.title)+'" placeholder="예: 김 세트">'
   +'<div class="t">채널</div>'+SEL('ch',state.ch,CH_KEYS,'y',null,CH_KEYS.map(function(c){return CH_NAME[c]}))
+  +'<div class="t">상품명</div><input class="in y" data-p="title" data-t="s" value="'+esc(state.title)+'" placeholder="예: 김 세트">'
   +'<div class="t">보관함</div><div class="note">작업을 저장해 두고 다시 열 때 씁니다. 안끼리 비교는 오른쪽 카드와 표에서 합니다.</div><select class="in plain" id="ld">'+savedOpts()+'</select>'+copyOpts()
   +'<div class="row2" style="margin-top:6px"><input class="in tx" id="sn" placeholder="저장 이름"><button class="btn sm" data-a="save">저장</button></div>'
   +'<div class="stat"><div class="k">기준안 100g당 판매가</div><div class="v">'+(b.p100>0?fmt(b.p100):'-')+'<small>원</small></div></div>'
   +infoPanel()+'<div class="t">메모 (IP·로열티 계약, 최근 실적)</div><textarea class="in" data-p="memo" data-t="s">'+esc(state.memo)+'</textarea>'
   +'</div>'
-  +'<div class="right"><div id="capw"><div class="capt"><b data-bind="title">'+esc(state.title)+'</b><span>'+CH_NAME[state.ch]+' / '+today()+' / '+(b.once?'1회 기준':'1개 기준')+'</span></div><div class="grid">';
- for(i=0;i<os.length;i++)h+=card(i,os[i]);
- h+='</div>'+cmpTable(os);
- os.forEach(function(o,i){
-  if(i===state.base)return;
-  var d=o.d,rows=[['공급가 (판매가·수수료)',d.sup],['원가',d.cost],['판관비 1 (로열티 등)',d.sga1],['판관비 2 (방송 고정비)',d.fix],['물류비',d.logi]],r='',mx=1;
-  rows.forEach(function(x){mx=Math.max(mx,Math.abs(x[1]))});
-  rows.forEach(function(x){if(Math.abs(x[1])>=0.5)r+='<div class="bar2"><span>'+x[0]+'</span><div class="tr"><i class="'+(x[1]>0?'p':'n')+'" style="width:'+(Math.abs(x[1])/mx*50)+'%"></i></div><b class="'+(x[1]>0?'pos':'neg')+'">'+sgn(x[1])+'원</b></div>'});
-  h+='<div class="box"><div class="bt"><span data-bind="nm'+i+'">'+esc(nm(i))+'</span> vs 기준 <span data-bind="nm'+state.base+'">'+esc(nm(state.base))+'</span>: 세트당 '+sgn(d.cm)+'원 (CM% '+(d.cmr>=0?'+':'')+(d.cmr*100).toFixed(2)+'%p)</div>'+(r||'<div style="color:var(--tx2)">차이 없음</div>')+'</div>'});
- return h+'</div></div></div>'}
+  +'<div class="right"><div id="capcards"><div class="capt"><b data-bind="title">'+esc(state.title||'상품명 미입력')+'</b><span>'+CH_NAME[state.ch]+' / '+today()+' / '+(b.once?'1회 기준':'1개 기준')+'</span></div><div class="grid">';
+ for(i=0;i<os.length;i++)h+=card(i,os[i],multi);
+ h+='</div></div>'+(multi?'<div class="note" style="margin:10px 2px 0">각 카드의 "비교 포함"으로 고른 안만 아래 구성 가격 비교와 기준 대비에 나옵니다. (기준안은 항상 포함)</div>':'')
+  +cmpTable(os,ix)+'<div id="capvs">'+vsBoxes(os,ix)+'</div>';
+ return h+'</div></div>'}
 
 // ---------- 보관함 탭 (관리) ----------
 function boxTab(){
@@ -428,43 +494,48 @@ function boxTab(){
  if(!state.saved.length)h+='<tr><td colspan="5" style="color:var(--tx3)">저장한 항목이 없습니다.</td></tr>';
  return h+'</tbody></table></div></div>'}
 
-// ---------- 설정 탭 (고정값 + 팜조아 물류비) ----------
+// ---------- 설정 탭 (고정값 + 물류사 견적) ----------
 function setTab(){
- var ST=state.ST,h='<div class="page">'+(ui.msg?'<div class="pop" style="margin:0 0 10px">'+ui.msg+'</div>':'')+'<div class="bt">고정값</div>'
+ var ST=state.ST,vi=Math.min(ui.vi||0,ST.vendors.length-1),vd=ST.vendors[vi],V='ST.vendors.'+vi+'.',h;
+ h='<div class="page">'+(ui.msg?'<div class="pop" style="margin:0 0 10px">'+ui.msg+'</div>':'')+'<div class="bt">고정값</div>'
   +'<div class="f2"><span>VAT 나눔값 (과세)</span>'+N('ST.vat',ST.vat)+'</div>'
   +'<div class="f2"><span>방송 전환율 (고정)</span><b>'+pc(ST.conv,0)+'</b></div>'
-  +'<div class="f2"><span>보관료율 (세트 매출 대비)</span><span>'+N('ST.stor',ST.stor,'p','%')+'</span></div>'
-  +'<div class="f2"><span>택배비 기본 단가 (팜조아)</span><span>'+N('ST.ship',ST.ship,'n','원')+'</span></div>'
-  +'<div class="bt" style="margin-top:16px">팜조아 물류비 기본값 (품온_크기) <span class="tag" style="background:var(--wnbg);color:var(--wn)">임시값 - 실제 단가 받으면 교체</span></div>'
-  +'<div class="note">카드의 품온·포장 크기에 맞는 줄이 자동으로 들어갑니다. 카드에서 항목별로 덮어쓸 수 있습니다. 칸마다 위는 단가, 아래는 수량입니다.</div>'
-  +'<div class="sc"><table><thead><tr><th>품온_크기</th>';
- ITEMS.forEach(function(it){h+='<th>'+it+'</th>'});
- h+='<th>비고</th></tr></thead><tbody>';
- TEMPS.forEach(function(t){SIZES.forEach(function(z){var key=packKey(t,z),p=ST.pack[key],P='ST.pack.'+key+'.';
-  h+='<tr><td><b>'+key+'</b></td>';
-  if(p){p.v.forEach(function(v,k){h+='<td>'+N(P+'v.'+k+'.0',v[0])+'<br>'+N(P+'v.'+k+'.1',v[1])+'</td>'});
-   h+='<td style="white-space:normal;min-width:180px">'+TX(P+'note',p.note,'출처·비고')+' <button class="mini" data-a="delpack" data-k="'+key+'">비우기</button></td>'}
-  else h+='<td colspan="'+ITEMS.length+'" style="text-align:left;color:var(--tx3)">값 없음 (0원 처리)</td><td><button class="mini" data-a="addpack" data-k="'+key+'">값 입력</button></td>';
-  h+='</tr>'})});
- h+='</tbody></table></div><div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" data-a="test">예시 값 대조 검증 실행</button><button class="btn" data-a="resetst">설정을 초기값으로 복원</button></div></div>';
+  +'<div class="f2"><span>직매입 물류비율 (공급가 대비)</span><span>'+N('ST.dmlog',ST.dmlog,'p','%')+'</span></div>'
+  +'<div class="f2"><span>직매입 행사 물류비율</span><span>'+N('ST.dmlog2',ST.dmlog2,'p','%')+'</span></div>'
+  +'<div class="bt" style="margin-top:16px">물류사 견적 <span class="tag" style="background:var(--wnbg);color:var(--wn)">임시값 - 실제 견적 받으면 교체</span></div>'
+  +'<div class="note">물류사를 추가해 견적을 입력해 두면, 작업대 카드의 "물류사" 드롭다운에서 고른 견적대로 물류비가 계산됩니다.</div>'
+  +'<div class="row2" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px"><select class="in plain" id="vsel" style="width:200px">'+ST.vendors.map(function(v,k){return '<option value="'+k+'"'+(k===vi?' selected':'')+'>'+esc(v.name)+'</option>'}).join('')+'</select>'
+  +'<button class="btn sm" data-a="addv">+ 물류사 추가 (현재 견적 복사)</button><button class="btn sm" data-a="delv"'+(ST.vendors.length>1?'':' disabled')+'>이 물류사 삭제</button></div>'
+  +'<div class="f2"><span>물류사 이름</span>'+TX(V+'name',vd.name,'예: OO물류')+'</div>'
+  +'<div class="f2"><span>택배비 단가</span><span>'+N(V+'ship',vd.ship,'n','원')+'</span></div>'
+  +'<div class="f2"><span>보관료율 (세트 매출 대비)</span><span>'+N(V+'stor',vd.stor,'p','%')+'</span></div>'
+  +'<div class="f2"><span>비고</span>'+TX(V+'note',vd.note,'출처·견적일')+'</div>'
+  +'<div class="bt" style="margin-top:14px">포장 자재 견적 (품온별)</div><div class="sc"><table><thead><tr><th>품온</th><th>항목</th><th>단가 (원)</th><th>수량</th></tr></thead><tbody>';
+ TEMPS.forEach(function(t){PACK[t].forEach(function(it,k){var Q=V+'pack.'+t+'.'+it[0]+'.';
+  h+='<tr><td>'+(k?'':'<b>'+t+'</b>')+'</td><td>'+it[1]+'</td><td>'+N(Q+'0',vd.pack[t]?vd.pack[t][it[0]][0]:0)+'</td><td>'+N(Q+'1',vd.pack[t]?vd.pack[t][it[0]][1]:0)+'</td></tr>'})});
+ h+='</tbody></table></div>'
+  +'<div class="bt" style="margin-top:14px">직납(직매입 상세) 단가</div><div class="sc"><table><thead><tr><th>항목</th><th>단가 (원)</th></tr></thead><tbody>';
+ PLT_ITEMS.forEach(function(it){h+='<tr><td>'+it[1]+'</td><td>'+N(V+'plt.'+it[0],(vd.plt||{})[it[0]])+'</td></tr>'});
+ h+='</tbody></table></div><div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" data-a="test">예시 대조 검증 실행</button><button class="btn" data-a="resetst">설정을 초기값으로 복원</button></div></div>';
  return h}
 
 // ---------- 렌더 ----------
 function render(keep){
  var a=document.activeElement,k=null;
  if(keep&&a&&a.dataset&&a.dataset.p)k={p:a.dataset.p,v:a.value,s:a.selectionStart};
- var os=compute();
- var tabs=[['work','작업대'],['box','보관함'],['set','설정']];
- var h='<div class="top"><b>손익 시뮬레이터</b>'+tabs.map(function(t){return '<button class="tab'+(ui.tab===t[0]?' on':'')+'" data-a="tab" data-t="'+t[0]+'">'+t[1]+'</button>'}).join('')+(ui.tab==='work'?'<span class="sp"><button class="btn sm" data-a="addsc">+ 안 추가</button><button class="btn sm" data-a="cap" data-id="capw" data-n="손익비교">캡처</button><button class="btn sm pri" data-a="kakao">카톡 요약</button></span>':'')+'</div>';
- h+=ui.tab==='work'?work(os):ui.tab==='box'?boxTab():setTab();
- h+='<div class="lg"><span><i style="background:var(--y);border:1px solid var(--yb)"></i>직접 입력</span><span><i style="background:var(--sk);border:1px solid var(--skb)"></i>자동값 (비우면 자동, 입력하면 덮어씀)</span><span>글자만 있는 값은 자동 계산 결과</span><span style="margin-left:auto">v0.12 · 자동 저장 (이 브라우저)</span></div>';
+ var os=compute(),w=ui.tab==='work',two=incl().length>1;
+ var tabs=[['work','🧮','작업대'],['box','🗄️','보관함'],['set','⚙️','설정']];
+ var h='<div class="top"><b>손익 시뮬레이터</b>'+tabs.map(function(t){return '<button class="tab'+(ui.tab===t[0]?' on':'')+'" data-a="tab" data-t="'+t[0]+'" title="'+t[2]+'"><span class="e">'+t[1]+'</span><span class="l">'+t[2]+'</span></button>'}).join('')
+  +(w?'<span class="sp">'+ib('addsc','➕','안 추가')+ib('cap','📷','표 캡처',' data-id="capcards" data-n="시뮬레이션표"')+ib('cap','📊','구성비교',' data-id="capcmp" data-n="구성가격비교"')+ib('cap','⚖️','기준대비',' data-id="capvs" data-n="기준안대비"'+(two?'':' data-none="1"'))+ib('kakao','💬','카톡 요약')+'</span>':'')+'</div>';
+ h+=w?work(os):ui.tab==='box'?boxTab():setTab();
+ h+='<div class="lg"><span><i style="background:var(--y);border:1px solid var(--yb)"></i>직접 입력 ("예: ..."는 입력 안내)</span><span><i style="background:var(--sk);border:1px solid var(--skb)"></i>자동값 (비우면 자동, 입력하면 덮어씀)</span><span>글자만 있는 값은 자동 계산 결과</span><span style="margin-left:auto">v0.13 · 자동 저장 (이 브라우저)</span></div>';
  document.getElementById('app').innerHTML=h;
  if(k){var e=document.querySelector('[data-p="'+k.p+'"]');if(e){e.focus();if(e.tagName!=='SELECT'&&e.type!=='checkbox'){e.value=k.v;try{e.setSelectionRange(k.s,k.s)}catch(x){}}}}
  persist()}
 // 글자 입력칸은 화면을 다시 그리지 않고 이름 표시만 갱신 (한글 조합이 끊기지 않게)
 function updateBinds(){
  document.querySelectorAll('[data-bind]').forEach(function(el){var b=el.dataset.bind;
-  if(b==='title')el.textContent=state.title;
+  if(b==='title')el.textContent=state.title||'상품명 미입력';
   else if(b.indexOf('nm')===0){var i=+b.slice(2);if(state.sc[i])el.textContent=nm(i)}
   else if(b.indexOf('cc')===0){var m=b.slice(2).split('_'),xx=state.sc[+m[0]],cc=xx&&xx.comps[+m[1]];if(cc)el.textContent=cc.n||('구성품 '+(+m[1]+1))}})}
 
@@ -491,45 +562,65 @@ app.addEventListener('compositionend',function(e){composing=false;var el=e.targe
 app.addEventListener('input',onInput);
 app.addEventListener('change',function(e){var el=e.target;
  if(el.id==='imp'){doImport(el);return}
+ if(el.id==='vsel'){ui.vi=+el.value;render();return}
  if(el.id==='cpick'){if(el.value){var pp=el.value.split(':');copyFromSaved(+pp[0],+pp[1])}render();return}
  if(el.id==='ld'){if(el.value!==''){var x=state.saved[+el.value];applySnap(x.data);ui.msg='불러왔습니다: '+esc(x.name)}render();return}
  if(el.dataset&&el.dataset.p&&(el.tagName==='SELECT'||el.type==='checkbox')){setPath(state,el.dataset.p,readVal(el));render()}});
 
+// 캡처용 복제본 보정: 접힌 섹션 내용 제거, 입력칸을 글자로 바꿔 세로 정렬이 깨지지 않게 함
+function fixClone(doc,id){
+ var root=doc.getElementById(id),src=document.getElementById(id),q='input,select,textarea',a=src.querySelectorAll(q),i;
+ for(i=0;i<a.length;i++){                                      // 원본·복제본 짝은 data-cv 번호로 맞춤
+  var o=a[i],c=root.querySelector('[data-cv="'+o.getAttribute('data-cv')+'"]'),sp=doc.createElement('span');
+  if(!c)continue;
+  if(o.type==='checkbox'){sp.textContent=o.checked?'☑':'☐'}
+  else{
+   var txt=o.tagName==='SELECT'?((o.options[o.selectedIndex]||{}).text||''):o.value;
+   sp.className=c.className+' cv';sp.textContent=txt||(o.classList.contains('sky')?o.placeholder:'');   // 하늘색 자동값은 보이고, 노랑 빈칸의 "예:" 안내는 캡처에서 뺌
+   if(!txt)sp.style.color='#9a988f';
+   sp.style.width=o.offsetWidth+'px';
+   sp.style.justifyContent=getComputedStyle(o).textAlign==='right'?'flex-end':'flex-start'}
+  c.parentNode.replaceChild(sp,c)}
+ [].forEach.call(root.querySelectorAll('details.sx:not([open]) > .bd'),function(n){n.parentNode.removeChild(n)})}   // 접힌 섹션은 내용 없이 제목만
 function capture(id,name){
  var el=document.getElementById(id);
+ if(!el||!el.textContent.trim()){ui.msg='캡처할 내용이 없습니다. 안을 2개 이상 비교에 포함해 주세요.';render();return}
  if(!window.html2canvas){ui.msg='캡처 도구를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침해 주세요.';render();return}
- html2canvas(el,{backgroundColor:getComputedStyle(document.body).backgroundColor,scale:2}).then(function(cv){
+ [].forEach.call(el.querySelectorAll('input,select,textarea'),function(n,i){n.setAttribute('data-cv',i)});
+ html2canvas(el,{backgroundColor:getComputedStyle(document.body).backgroundColor,scale:2,
+  ignoreElements:function(n){return n.classList&&n.classList.contains('nocap')},onclone:function(doc){fixClone(doc,id)}}).then(function(cv){
   cv.toBlob(function(b){var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name+'_'+today()+'.png';a.click();
-   try{navigator.clipboard.write([new ClipboardItem({'image/png':b})])}catch(x){}
+   try{navigator.clipboard.write([new ClipboardItem({'image/png':b})]).catch(function(){})}catch(x){}
    ui.msg='이미지로 저장했습니다: '+esc(a.download);render()})}).catch(function(err){ui.msg='캡처 실패: '+esc(err&&err.message||err);render()})}
 
 function snapshot(){return clone({ch:state.ch,title:state.title,memo:state.memo,base:state.base,info:state.info,sc:state.sc})}
-function applySnap(d){state.ch=d.ch;state.title=d.title;state.memo=d.memo||'';state.base=d.base||0;var ad=adopt({base:state.base,sc:d.sc,info:d.info});state.info=ad.info;state.sc=ad.sc;ui.tab='work';ui.kakao='';ui.msg=''}
+function applySnap(d){state.ch=d.ch==='미리주문'?'B2C':d.ch;state.title=d.title;state.memo=d.memo||'';state.base=d.base||0;var ad=adopt({base:state.base,sc:d.sc,info:d.info});state.info=ad.info;state.sc=ad.sc;ui.tab='work';ui.kakao='';ui.msg=''}
 
 app.addEventListener('click',function(e){
  var b=e.target.closest('[data-a]');if(!b)return;
  var a=b.dataset.a,i=+b.dataset.i,j=+b.dataset.j;
  ui.msg='';
  if(a==='tab'){ui.tab=b.dataset.t;ui.kakao=''}
- else if(a==='addsc'){var cb=clone(state.sc[state.base]);cb.name='';state.sc.push(cb)}
+ else if(a==='addsc'){var cb=clone(state.sc[state.base]);cb.name='';cb.exc=0;state.sc.push(cb)}
  else if(a==='del'){if(state.sc.length>1){state.sc.splice(i,1);if(state.base===i)state.base=0;else if(state.base>i)state.base--}}
  else if(a==='base'){state.base=i}
+ else if(a==='inc'){state.sc[i].exc=state.sc[i].exc===1?0:1}
  else if(a==='addcomp'){state.sc[i].comps.push(newComp())}
  else if(a==='delcomp'){if(state.sc[i].comps.length>1)state.sc[i].comps.splice(j,1)}
  else if(a==='kakao'){ui.kakao=kakaoText(compute())}
  else if(a==='kclose'){ui.kakao=''}
  else if(a==='copy'){var t=document.getElementById('kt');t.select();var ok=false;try{ok=document.execCommand('copy')}catch(x){}ui.msg=ok?'복사했습니다.':'복사하지 못했습니다. 글자를 직접 선택해 복사해 주세요.'}
- else if(a==='cap'){capture(b.dataset.id,b.dataset.n);return}
+ else if(a==='cap'){if(b.dataset.none){ui.msg='기준 대비는 안이 2개 이상일 때 나옵니다. "안 추가"로 비교할 안을 만들어 주세요.';render();return}capture(b.dataset.id,b.dataset.n);return}
  else if(a==='save'){var nmv=document.getElementById('sn').value.trim();if(!nmv){ui.msg='저장 이름을 입력해 주세요.'}else{state.saved.unshift({name:nmv,ts:today(),data:snapshot()});ui.msg='저장했습니다: '+esc(nmv)}}
  else if(a==='load'){applySnap(state.saved[i].data);ui.msg='불러왔습니다: '+esc(state.saved[i].name)}
  else if(a==='delsaved'){state.saved.splice(i,1)}
  else if(a==='export'){var bl=new Blob([JSON.stringify(state)],{type:'application/json'}),l=document.createElement('a');l.href=URL.createObjectURL(bl);l.download='손익시뮬레이터_백업_'+today()+'.json';l.click();ui.msg='내보냈습니다.'}
  else if(a==='import'){document.getElementById('imp').click();return}
  else if(a==='blank'){state.sc=[newSc()];state.info=newInfo();state.base=0;state.ch='방송';state.title='';state.memo='';ui.tab='work'}
- else if(a==='addpack'){state.ST.pack[b.dataset.k]={v:ITEMS.map(function(){return [0,0]}),note:''}}
- else if(a==='delpack'){delete state.ST.pack[b.dataset.k]}
- else if(a==='resetst'){state.ST=clone(DEF_ST);ui.msg='설정과 팜조아 기본값을 초기값으로 되돌렸습니다.'}
- else if(a==='test'){var r=selfTest();ui.msg='예시 값 대조 (초기 설정 기준, 고정비 차감 전 CM)<br>'+r.map(function(x){return (x.ok?'일치 ':'불일치 ')+esc(x.name)+': 기대 '+x.exp+' / 계산 '+x.got.toFixed(2)}).join('<br>')}
+ else if(a==='addv'){var vs=state.ST.vendors,cv=clone(vs[Math.min(ui.vi||0,vs.length-1)]);cv.id='v'+Date.now();cv.name=cv.name+' 복사';vs.push(cv);ui.vi=vs.length-1}
+ else if(a==='delv'){var vl=state.ST.vendors;if(vl.length>1){vl.splice(ui.vi||0,1);ui.vi=0}}
+ else if(a==='resetst'){state.ST=clone(DEF_ST);ui.vi=0;ui.msg='설정과 물류사 견적을 초기값으로 되돌렸습니다.'}
+ else if(a==='test'){var r=selfTest();ui.msg='예시 대조 (초기 설정 기준, 고정비 차감 전 CM)<br>'+r.map(function(x){return (x.ok?'일치 ':'불일치 ')+esc(x.name)+': 기대 '+x.exp+' / 계산 '+x.got.toFixed(2)}).join('<br>')}
  render()});
 function doImport(inp){
  var f=inp.files[0];if(!f)return;var r=new FileReader();
