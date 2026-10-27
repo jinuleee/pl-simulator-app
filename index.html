@@ -389,12 +389,12 @@ function SEL(p,v,opts,cls,first,labels){
  return h+'</select>'}
 function RS(l,v,cls,k){return '<div class="res'+(k?' k':'')+'"><span>'+l+'</span><b class="'+(cls||'')+'">'+v+'</b></div>'}
 // 안 이름: 직접 쓰면 그 이름, 비워 두면 구성(견적 원가) 입력값으로 자동 생성 (예: "1안 갈비 x3 + 감자사리면 x1 · 원가 24,800원")
-function autoName(i){
+function autoName(i,noCost){
  var s=state.sc[i],list=s.comps.filter(function(c){return c.n||num(c.p)||num(c.q)}),cost=0;
  s.comps.forEach(function(c){cost+=num(c.p)*num(c.q)});cost*=1+num(s.markup);
  if(!list.length)return (i+1)+'안';
  var t=list.slice(0,3).map(function(c){return (c.n||'구성품')+(num(c.q)>1?' x'+num(c.q):'')}).join(' + ')+(list.length>3?' 외 '+(list.length-3)+'개':'');
- return (i+1)+'안 '+t+(cost>0?' · 원가 '+fmt(cost)+'원':'')}
+ return (i+1)+'안 '+t+(cost>0&&!noCost?' · 원가 '+fmt(cost)+'원':'')}
 function nm(i){return state.sc[i].name||autoName(i)}
 function row(l,h){return '<div class="r"><span>'+l+'</span><div class="c">'+h+'</div></div>'}
 function sx(k,t,sum,body,def){var op=ui.open[k];if(op===undefined)op=def;return '<details class="sx" data-k="'+k+'"'+(op?' open':'')+'><summary><span>'+t+'</span><b>'+sum+'</b></summary><div class="bd">'+body+'</div></details>'}
@@ -480,21 +480,16 @@ function card(i,o,multi){
  h+=sx(K+'f','손익 내역',pc(o.cmr,2)+(dm?' (공급가 대비)':''),b,false);
  return h+'</div>'}
 
-// ---------- 카톡 요약 (~함/~임체) ----------
+// ---------- 카톡 요약 (양식 E: 안별 카드형. 결론·추천은 자동으로 쓰지 않고 사용자가 아래 코멘트에 직접 작성) ----------
 function kakaoText(os){
- var ix=incl(),L=['[손익 시뮬레이션 비교] '+today()+' / '+(state.title||'상품명 미입력')+' / '+CH_NAME[state.ch]],n=1,best=ix[0];
- ix.forEach(function(i){if(os[i].cmr>os[best].cmr)best=i});
- if(ix.length>1)L.push((n++)+'. 결론: CM%가 가장 높은 안은 '+nm(best)+' ('+pc(os[best].cmr)+')임.');
- ix.forEach(function(i){var o=os[i];
-  L.push((n++)+'. '+nm(i)+': '+(o.once?'세트당':'개당')+' CM '+fmt(o.cm)+'원('+pc(o.cmr)+')'
-   +(o.rep?', 2회차~ '+fmt(o.cm2)+'원('+pc(o.cmr2)+')':'')+(o.once?', 1회 총 CM '+fmt(o.tcm/10000)+'만원':'')+(o.p100>0?', 100g당 '+fmt(o.p100)+'원':'')
-   +(o.prOn?', 행사(-'+pc(o.prom,0)+') CM '+fmt(o.prCm)+'원('+pc(o.prCmr)+')':'')
-   +(i!==state.base&&Math.round(o.d.cm)!==0?' / 기준 대비 '+sgn(o.d.cm)+'원, 주원인 '+o.drv:'')+'.')});
- var b=os[state.base],sb=eff(state.sc[state.base]);
- L.push('가정: '+(sb.chname||CH_NAME[state.ch])+(state.ch==='직매입'?' 마진율 ':' 수수료율 ')+pc(sb.commrate,0)
-  +(state.ch==='방송'?', '+sb.btype+', 전환율 '+pc(state.ST.conv,0):'')+', '+b.tax+'·'+b.temp
-  +(state.ch==='직매입'&&sb.lmode==='plt'?', 물류 직납 상세('+b.vname+' 견적)':state.ch==='직매입'?', 물류비 공급가 '+pc(b.lrate,0):', 물류비 '+b.vname+' 견적')
-  +', 기준안 '+nm(state.base)+'임.');
+ var ix=incl(),d=new Date(),md=('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2),
+ L=['[P&L] '+(state.title||'상품명 미입력')+' / '+CH_NAME[state.ch]+' / '+md];
+ ix.forEach(function(i){var o=os[i],e=eff(state.sc[i]),nmv=state.sc[i].name||autoName(i,true);
+  L.push('■ '+nmv+(i===state.base?' (기준)':''));
+  L.push('판매가 '+fmt(o.price)+'원'+(o.coupon>0?' (쿠폰 적용 '+fmt(o.final)+'원)':'')+' / 원가 '+fmt(o.cost)+'원');
+  L.push((o.rep?'1회차 ':'')+'CM '+fmt(o.cm)+'원 ('+pc(o.cmr)+')'+(o.once?' / 1회 총 '+fmt(o.tcm/10000)+'만원':''));
+  if(o.rep)L.push('2회차~ CM '+fmt(o.cm2)+'원 ('+pc(o.cmr2)+')')});
+ ix.forEach(function(i){if(i!==state.base)L.push('▶ '+(state.sc[i].name||autoName(i,true))+'은 기준 대비 '+sgn(os[i].d.cm)+'원')});
  return L.join('\n')}
 
 // ---------- 작업대 화면 ----------
@@ -546,7 +541,7 @@ function cmpTable(os,ix){
 function work(os){
  var b=os[state.base],ix=incl(),multi=os.length>1,h,i;
  h=''
-  +(ui.kakao?'<div class="pop"><div class="bt">카톡 보고용 요약</div><textarea readonly id="kt">'+esc(ui.kakao)+'</textarea><div style="margin-top:8px;display:flex;gap:8px"><button class="btn" data-a="copy">복사</button><button class="btn" data-a="kclose">닫기</button></div></div>':'')
+  +(ui.kakao?'<div class="pop"><div class="bt">카톡 보고용 요약</div><textarea readonly id="kt">'+esc(ui.kakao)+'</textarea><div class="note" style="margin-top:8px">아래에 결론·의견을 직접 적으면 복사할 때 요약 밑에 함께 붙습니다. 복사하면 적은 코멘트가 기록으로 남습니다.</div><textarea id="kc" class="in" style="height:90px" data-p="cmt" data-t="s" placeholder="예: 1안 권장. 2안은 판매가가 낮아 로열티 비중이 커짐.">'+esc(state.cmt||'')+'</textarea><div style="margin-top:8px;display:flex;gap:8px"><button class="btn" data-a="copy">복사</button><button class="btn" data-a="kclose">닫기</button></div></div>':'')
   +(ui.msg?'<div class="pop">'+ui.msg+'</div>':'');
  h+='<div class="split"><div class="left">'
   +'<div class="t">채널</div>'+SEL('ch',state.ch,CH_KEYS,'y',null,CH_KEYS.map(function(c){return CH_NAME[c]}))
@@ -679,8 +674,8 @@ function capture(id,name){
    try{navigator.clipboard.write([new ClipboardItem({'image/png':b})]).catch(function(){})}catch(x){}
    ui.msg='이미지로 저장했습니다: '+esc(a.download);render()})}).catch(function(err){ui.msg='캡처 실패: '+esc(err&&err.message||err);render()})}
 
-function snapshot(){return clone({ch:state.ch,title:state.title,memo:state.memo,base:state.base,info:state.info,sc:state.sc})}
-function applySnap(d){state.ch=d.ch==='미리주문'?'B2C':d.ch;state.title=d.title;state.memo=d.memo||'';state.base=d.base||0;var ad=adopt({base:state.base,sc:d.sc,info:d.info});state.info=ad.info;state.sc=ad.sc;ui.tab='work';ui.kakao='';ui.msg=''}
+function snapshot(){return clone({cmt:state.cmt||'',ch:state.ch,title:state.title,memo:state.memo,base:state.base,info:state.info,sc:state.sc})}
+function applySnap(d){state.cmt=d.cmt||'';state.ch=d.ch==='미리주문'?'B2C':d.ch;state.title=d.title;state.memo=d.memo||'';state.base=d.base||0;var ad=adopt({base:state.base,sc:d.sc,info:d.info});state.info=ad.info;state.sc=ad.sc;ui.tab='work';ui.kakao='';ui.msg=''}
 
 app.addEventListener('click',function(e){
  var b=e.target.closest('[data-a]');if(!b)return;
@@ -695,7 +690,12 @@ app.addEventListener('click',function(e){
  else if(a==='delcomp'){if(state.sc[i].comps.length>1)state.sc[i].comps.splice(j,1)}
  else if(a==='kakao'){ui.kakao=kakaoText(compute())}
  else if(a==='kclose'){ui.kakao=''}
- else if(a==='copy'){var t=document.getElementById('kt');t.select();var ok=false;try{ok=document.execCommand('copy')}catch(x){}ui.msg=ok?'복사했습니다.':'복사하지 못했습니다. 글자를 직접 선택해 복사해 주세요.'}
+ else if(a==='copy'){
+  var cm=(state.cmt||'').trim(),full=document.getElementById('kt').value+(cm?'\n\n'+cm:''),ta=document.createElement('textarea'),ok=false;
+  ta.value=full;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();try{ok=document.execCommand('copy')}catch(x){}document.body.removeChild(ta);
+  if(cm){state.cmtlog=state.cmtlog||[];var lg=state.cmtlog[state.cmtlog.length-1];                     // 코멘트 기록 (나중에 자주 쓰는 문구를 양식에 추가하는 용도)
+   if(!lg||lg.text!==cm){state.cmtlog.push({ts:new Date().toISOString(),title:state.title,ch:state.ch,n:incl().length,text:cm});if(state.cmtlog.length>300)state.cmtlog.shift()}}
+  ui.msg=ok?'복사했습니다.':'복사하지 못했습니다. 글자를 직접 선택해 복사해 주세요.'}
  else if(a==='cap'){capture(b.dataset.id,b.dataset.n);return}
  else if(a==='save'){var nmv=document.getElementById('sn').value.trim();if(!nmv){ui.msg='저장 이름을 입력해 주세요.'}else{state.saved.unshift({name:nmv,ts:today(),data:snapshot()});ui.msg='저장했습니다: '+esc(nmv)}}
  else if(a==='load'){applySnap(state.saved[i].data);ui.msg='불러왔습니다: '+esc(state.saved[i].name)}
