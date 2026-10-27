@@ -43,6 +43,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .card.base{border:2px solid var(--ac)}
 .nmi{flex:1;min-width:0;border:0;border-bottom:1px dashed var(--yb);background:transparent;color:var(--tx);font:inherit;font-size:15px;font-weight:700;padding:2px 0}
 .nmi:focus{outline:0;border-bottom-color:var(--ac)}
+.nmi::placeholder{color:var(--tx);opacity:1}
 .tag{font-size:11px;padding:2px 9px;border-radius:20px;background:var(--acbg);color:var(--ac);font-weight:600;white-space:nowrap}
 .chip2{font-size:11px;padding:2px 9px;border-radius:20px;font-weight:600;white-space:nowrap}
 .chip2.up{background:var(--posbg);color:var(--pos)}.chip2.dn{background:var(--negbg);color:var(--neg)}
@@ -383,7 +384,14 @@ function SEL(p,v,opts,cls,first,labels){
  opts.forEach(function(o,i){h+='<option value="'+esc(o)+'"'+(o===v?' selected':'')+'>'+esc(labels?labels[i]:o)+'</option>'});
  return h+'</select>'}
 function RS(l,v,cls,k){return '<div class="res'+(k?' k':'')+'"><span>'+l+'</span><b class="'+(cls||'')+'">'+v+'</b></div>'}
-function nm(i){return state.sc[i].name||((i+1)+'안')}
+// 안 이름: 직접 쓰면 그 이름, 비워 두면 구성(견적 원가) 입력값으로 자동 생성 (예: "1안 갈비 x3 + 감자사리면 x1 · 원가 24,800원")
+function autoName(i){
+ var s=state.sc[i],list=s.comps.filter(function(c){return c.n||num(c.p)||num(c.q)}),cost=0;
+ s.comps.forEach(function(c){cost+=num(c.p)*num(c.q)});cost*=1+num(s.markup);
+ if(!list.length)return (i+1)+'안';
+ var t=list.slice(0,3).map(function(c){return (c.n||'구성품')+(num(c.q)>1?' x'+num(c.q):'')}).join(' + ')+(list.length>3?' 외 '+(list.length-3)+'개':'');
+ return (i+1)+'안 '+t+(cost>0?' · 원가 '+fmt(cost)+'원':'')}
+function nm(i){return state.sc[i].name||autoName(i)}
 function row(l,h){return '<div class="r"><span>'+l+'</span><div class="c">'+h+'</div></div>'}
 function sx(k,t,sum,body,def){var op=ui.open[k];if(op===undefined)op=def;return '<details class="sx" data-k="'+k+'"'+(op?' open':'')+'><summary><span>'+t+'</span><b>'+sum+'</b></summary><div class="bd">'+body+'</div></details>'}
 function ib(a,e,l,x){return '<button class="ib" data-a="'+a+'" title="'+l+'" aria-label="'+l+'"'+(x||'')+'><span class="e">'+e+'</span></button>'}
@@ -505,9 +513,9 @@ function infoPanel(){
 // 안(표)끼리 판매가·구성 가격을 나란히 보는 표 (비교 포함으로 고른 안만). 안 이름 수정·기준안 지정은 여기서.
 function cmpTable(os,ix){
  var b=os[state.base],bc=state.ch==='방송',dm=state.ch==='직매입',es=state.sc.map(eff),mx=0,
- h='<div class="box cmpt" id="capcmp"><div class="bt">구성 가격 비교 <span style="font-weight:400;color:var(--tx3);font-size:11px">'+esc(state.title||'')+' · 안 이름 수정·기준안 지정은 여기서</span></div><div class="sc"><table><thead><tr><th></th>';
+ h='<div class="box cmpt" id="capcmp"><div class="bt">구성 가격 비교 <span style="font-weight:400;color:var(--tx3);font-size:11px">'+esc(state.title||'')+' · 안 이름은 비워 두면 구성(견적 원가)에서 자동 생성 · 기준안 지정은 여기서</span></div><div class="sc"><table><thead><tr><th></th>';
  ix.forEach(function(i){mx=Math.max(mx,es[i].comps.length)});
- ix.forEach(function(i){h+='<th><input class="nmi" data-p="sc.'+i+'.name" data-t="s" placeholder="'+(i+1)+'안 이름" value="'+esc(state.sc[i].name)+'"><div>'+(i===state.base?'<span class="tag">기준안</span>':'<button class="lnk nocap" data-a="base" data-i="'+i+'">기준으로 지정</button>')+'</div></th>'});
+ ix.forEach(function(i){h+='<th><input class="nmi" data-p="sc.'+i+'.name" data-t="s" data-nmph="'+i+'" placeholder="'+esc(nm(i))+'" value="'+esc(state.sc[i].name)+'"><div>'+(i===state.base?'<span class="tag">기준안</span>':'<button class="lnk nocap" data-a="base" data-i="'+i+'">기준으로 지정</button>')+'</div></th>'});
  h+='</tr></thead><tbody>';
  function dl(d,i,cost){if(i===state.base)return '';var r=Math.round(d);if(!r)return '';return ' <small class="'+((cost?d>0:d<0)?'neg':'pos')+'">'+sgn(d)+'</small>'}
  function line(label,fn){h+='<tr><td>'+label+'</td>';ix.forEach(function(i){h+='<td>'+fn(os[i],i)+'</td>'});h+='</tr>'}
@@ -606,6 +614,7 @@ function render(keep){
  persist()}
 // 글자 입력칸은 화면을 다시 그리지 않고 이름 표시만 갱신 (한글 조합이 끊기지 않게)
 function updateBinds(){
+ document.querySelectorAll('input[data-nmph]').forEach(function(el){el.placeholder=nm(+el.dataset.nmph)});
  document.querySelectorAll('[data-bind]').forEach(function(el){var b=el.dataset.bind;
   if(b==='title')el.textContent=state.title||'상품명 미입력';
   else if(b.indexOf('nm')===0){var i=+b.slice(2);if(state.sc[i])el.textContent=nm(i)}
@@ -651,8 +660,8 @@ function fixClone(doc,id){
   if(o.type==='checkbox'){sp.textContent=o.checked?'☑':'☐'}
   else{
    var txt=o.tagName==='SELECT'?((o.options[o.selectedIndex]||{}).text||''):o.value;
-   sp.className=c.className+' cv';sp.textContent=txt||(o.classList.contains('sky')?o.placeholder:'');   // 하늘색 자동값은 보이고, 노랑 빈칸의 "예:" 안내는 캡처에서 뺌
-   if(!txt)sp.style.color='#9a988f';
+   sp.className=c.className+' cv';sp.textContent=txt||(o.classList.contains('sky')||o.classList.contains('nmi')?o.placeholder:'');   // 하늘색 자동값은 보이고, 노랑 빈칸의 "예:" 안내는 캡처에서 뺌
+   if(!txt&&!o.classList.contains('nmi'))sp.style.color='#9a988f';
    sp.style.width=o.offsetWidth+'px';
    sp.style.justifyContent=getComputedStyle(o).textAlign==='right'?'flex-end':'flex-start'}
   c.parentNode.replaceChild(sp,c)}
