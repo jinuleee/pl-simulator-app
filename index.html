@@ -113,6 +113,7 @@ th{color:var(--tx3);font-size:11px;font-weight:600}
 textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 .f2{display:flex;justify-content:space-between;align-items:center;max-width:420px;padding:4px 0;color:var(--tx2)}
 .f2 .in.y{width:112px}
+.brand{display:flex;flex-direction:column;margin-right:24px;flex-shrink:0;line-height:1.25}.top .brand b{margin:0}.brand small{font-size:10.5px;color:var(--tx3);white-space:nowrap}
 .tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.1;min-width:44px}
 .tab .e,.ib .e{font-size:20px}
 .ib{border:1px solid var(--bd2);background:var(--pn);border-radius:10px;min-width:40px;height:36px;justify-content:center;padding:0 8px;display:flex;flex-direction:column;align-items:center;line-height:1.1}
@@ -126,6 +127,7 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 <div id="app"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
+/*VERSION*/var APP_VERSION='1.0015.0',APP_UPDATED='2026-10-28 08:56';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
 /*ENGINE_START*/
 // 손익 계산 엔진 (화면과 분리. test_engine.js가 이 구간만 꺼내 예시 값과 대조)
 var ROY_BASES=['판매가(VAT포함)','매출(VAT제외)','공급가','원가합계','구성품1원가'];
@@ -598,10 +600,10 @@ function render(keep){
  if(keep&&a&&a.dataset&&a.dataset.p)k={p:a.dataset.p,v:a.value,s:a.selectionStart};
  var os=compute(),w=ui.tab==='work';
  var tabs=[['work','🧮','작업대'],['box','🗄️','보관함'],['set','⚙️','설정']];
- var h='<div class="top"><b>P&amp;L Simulator</b>'+tabs.map(function(t){return '<button class="tab'+(ui.tab===t[0]?' on':'')+'" data-a="tab" data-t="'+t[0]+'" title="'+t[2]+'"><span class="e">'+t[1]+'</span></button>'}).join('')
+ var h='<div class="top"><div class="brand"><b>P&amp;L Simulator</b><small id="ver">v'+APP_VERSION+' · 업데이트 '+APP_UPDATED+'</small></div>'+tabs.map(function(t){return '<button class="tab'+(ui.tab===t[0]?' on':'')+'" data-a="tab" data-t="'+t[0]+'" title="'+t[2]+'"><span class="e">'+t[1]+'</span></button>'}).join('')
   +(w?'<span class="sp">'+ib('addsc','➕','안 추가')+ib('cap','📷','표 캡처',' data-id="capcards" data-n="시뮬레이션표"')+ib('cap','📊','구성비교',' data-id="capcmp" data-n="구성가격비교"')+ib('kakao','💬','카톡 요약')+'</span>':'')+'</div>';
  h+=w?work(os):ui.tab==='box'?boxTab():setTab();
- h+='<div class="lg"><span><i style="background:var(--y);border:1px solid var(--yb)"></i>직접 입력 ("예: ..."는 입력 안내)</span><span><i style="background:var(--sk);border:1px solid var(--skb)"></i>자동값 (비우면 자동, 입력하면 덮어씀)</span><span>글자만 있는 값은 자동 계산 결과</span><span style="margin-left:auto">v0.14 · 자동 저장 (이 브라우저)</span></div>';
+ h+='<div class="lg"><span><i style="background:var(--y);border:1px solid var(--yb)"></i>직접 입력 ("예: ..."는 입력 안내)</span><span><i style="background:var(--sk);border:1px solid var(--skb)"></i>자동값 (비우면 자동, 입력하면 덮어씀)</span><span>글자만 있는 값은 자동 계산 결과</span><span style="margin-left:auto">v'+APP_VERSION+' · 자동 저장 (이 브라우저)</span></div>';
  document.getElementById('app').innerHTML=h;
  if(k){var e=document.querySelector('[data-p="'+k.p+'"]');if(e){e.focus();if(e.tagName!=='SELECT'&&e.type!=='checkbox'){e.value=k.v;try{e.setSelectionRange(k.s,k.s)}catch(x){}}}}
  persist()}
