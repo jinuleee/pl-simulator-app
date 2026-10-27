@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>손익 시뮬레이터</title>
+<title>P&amp;L Simulator</title>
 <!-- 실행: 이 파일을 더블클릭(크롬/엣지). 저장은 이 브라우저(localStorage)에만 됩니다. 계산 엔진: ENGINE_START ~ ENGINE_END -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
@@ -13,7 +13,7 @@
 body{margin:0;background:var(--bg);color:var(--tx);font:13px/1.5 Pretendard,"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;cursor:pointer}
 .top{display:flex;gap:2px;align-items:center;padding:0 20px;background:var(--pn);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5;min-height:52px;flex-wrap:wrap}
-.top b{font-size:15px;font-weight:700;margin-right:24px;letter-spacing:-.2px}
+.top b{font-size:15px;font-weight:700;margin-right:24px;letter-spacing:-.2px;white-space:nowrap;flex-shrink:0}
 .tab{border:0;background:none;padding:0 14px;height:52px;color:var(--tx2);border-bottom:2px solid transparent;font-weight:500}
 .tab.on{color:var(--tx);border-bottom-color:var(--ac);font-weight:600}
 .bar{display:flex;gap:10px;align-items:center;padding:14px 20px 4px;flex-wrap:wrap}
@@ -319,7 +319,7 @@ async function ghRead(c){
  if(!r.ok)throw new Error(ghErr(r));
  var j=await r.json();return {sha:j.sha,text:b64d(j.content)}}
 async function ghWrite(c,text,sha){
- var body={message:'손익 시뮬레이터 저장 '+today(),content:b64e(text)};if(sha)body.sha=sha;
+ var body={message:'P&L Simulator 저장 '+today(),content:b64e(text)};if(sha)body.sha=sha;
  var r=await fetch(ghUrl(c),{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},ghHdr(c)),body:JSON.stringify(body)});
  if(r.status===409||r.status===422)throw new Error('충돌: 다른 곳에서 먼저 저장됨');
  if(!r.ok)throw new Error(ghErr(r));
@@ -603,7 +603,7 @@ function render(keep){
  if(keep&&a&&a.dataset&&a.dataset.p)k={p:a.dataset.p,v:a.value,s:a.selectionStart};
  var os=compute(),w=ui.tab==='work';
  var tabs=[['work','🧮','작업대'],['box','🗄️','보관함'],['set','⚙️','설정']];
- var h='<div class="top"><b>손익 시뮬레이터</b>'+tabs.map(function(t){return '<button class="tab'+(ui.tab===t[0]?' on':'')+'" data-a="tab" data-t="'+t[0]+'" title="'+t[2]+'"><span class="e">'+t[1]+'</span></button>'}).join('')
+ var h='<div class="top"><b>P&amp;L Simulator</b>'+tabs.map(function(t){return '<button class="tab'+(ui.tab===t[0]?' on':'')+'" data-a="tab" data-t="'+t[0]+'" title="'+t[2]+'"><span class="e">'+t[1]+'</span></button>'}).join('')
   +(w?'<span class="sp">'+ib('addsc','➕','안 추가')+ib('cap','📷','표 캡처',' data-id="capcards" data-n="시뮬레이션표"')+ib('cap','📊','구성비교',' data-id="capcmp" data-n="구성가격비교"')+ib('kakao','💬','카톡 요약')+'</span>':'')+'</div>';
  h+=w?work(os):ui.tab==='box'?boxTab():setTab();
  h+='<div class="lg"><span><i style="background:var(--y);border:1px solid var(--yb)"></i>직접 입력 ("예: ..."는 입력 안내)</span><span><i style="background:var(--sk);border:1px solid var(--skb)"></i>자동값 (비우면 자동, 입력하면 덮어씀)</span><span>글자만 있는 값은 자동 계산 결과</span><span style="margin-left:auto">v0.14 · 자동 저장 (이 브라우저)</span></div>';
@@ -715,7 +715,7 @@ function doImport(inp){
  var f=inp.files[0];if(!f)return;var r=new FileReader();
  r.onload=function(){try{var s=JSON.parse(r.result);
    if(s&&(s.ver===3||s.ver===4||s.ver===5)&&s.sc&&s.sc.length)state=upgrade(s);
-   else throw 0;ui.msg='가져왔습니다.'}catch(x){ui.msg='이 파일은 손익 시뮬레이터 백업이 아닙니다.'}render()};
+   else throw 0;ui.msg='가져왔습니다.'}catch(x){ui.msg='이 파일은 P&amp;L Simulator 백업이 아닙니다.'}render()};
  r.readAsText(f)}
 app.addEventListener('toggle',function(e){var k=e.target.dataset&&e.target.dataset.k;if(k)ui.open[k]=e.target.open},true);
 render();
