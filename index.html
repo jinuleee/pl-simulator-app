@@ -656,6 +656,10 @@ function fixClone(doc,id){
    sp.style.width=o.offsetWidth+'px';
    sp.style.justifyContent=getComputedStyle(o).textAlign==='right'?'flex-end':'flex-start'}
   c.parentNode.replaceChild(sp,c)}
+ if(id==='capcards'){                                          // 표(카드)만 딱 맞는 너비로: 오른쪽 빈 공간 제거
+  var cs=src.querySelectorAll('.card'),g=root.querySelector('.grid');
+  if(cs.length&&g){var w=cs[0].offsetWidth,cols=0,k;for(k=0;k<cs.length;k++)if(cs[k].offsetTop===cs[0].offsetTop)cols++;
+   var tw=cols*w+(cols-1)*16;g.style.gridTemplateColumns='repeat('+cols+','+w+'px)';g.style.width=tw+'px';root.style.width=tw+'px'}}
  [].forEach.call(root.querySelectorAll('details.sx:not([open]) > .bd'),function(n){n.parentNode.removeChild(n)})}   // 접힌 섹션은 내용 없이 제목만
 function capture(id,name){
  var el=document.getElementById(id);
