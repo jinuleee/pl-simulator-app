@@ -292,7 +292,79 @@ function loadState(){
  try{var t3=localStorage.getItem(V3KEY);if(t3){var s3=JSON.parse(t3);if(s3&&s3.ver===3&&s3.sc&&s3.sc.length)return upgrade(s3)}}catch(e){}
  return fresh()}
 var state=loadState();
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}ghAuto()}
+
+// ---------- GitHub 저장 (선택) ----------
+// 보관함·작업·설정 전체(state)를 지정한 비공개 저장소의 JSON 파일 1개로 저장/불러오기. 토큰은 이 브라우저(localStorage)에만 두고 state·내보내기 파일에는 넣지 않음.
+var GHK='plx_gh',ghTimer=null,ghBusy=false;
+function ghCfg(){var c={};try{c=JSON.parse(localStorage.getItem(GHK))||{}}catch(e){}if(!c.path)c.path='data/state.json';return c}
+function ghPut(c){try{localStorage.setItem(GHK,JSON.stringify(c))}catch(e){}}
+function ghOn(c){return !!(c.repo&&c.token&&c.path)}
+function ghHash(s){var h=5381,i;for(i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return String(h)}
+function b64e(s){return btoa(unescape(encodeURIComponent(s)))}
+function b64d(s){return decodeURIComponent(escape(atob(s.replace(/\s/g,''))))}
+function ghUrl(c){return 'https://api.github.com/repos/'+c.repo.trim()+'/contents/'+c.path.trim().split('/').map(encodeURIComponent).join('/')}
+function ghHdr(c){return {'Authorization':'Bearer '+c.token.trim(),'Accept':'application/vnd.github+json'}}
+function ghStatus(t){var e=document.getElementById('ghst');if(e)e.textContent=t;ui.gh=t}
+function ghErr(r){return r.status===401?'토큰이 올바르지 않거나 만료됨':r.status===403?'토큰 권한 부족 (Contents: Read and write 필요)':r.status===404?'저장소를 찾을 수 없음 (이름·토큰 접근 권한 확인)':'GitHub 오류 '+r.status}
+// 원격 파일 읽기: {sha,text} / 없으면 {none:true} / 실패 시 throw
+async function ghRead(c){
+ var r=await fetch(ghUrl(c),{headers:ghHdr(c),cache:'no-store'});
+ if(r.status===404){var rr=await fetch('https://api.github.com/repos/'+c.repo.trim(),{headers:ghHdr(c)});if(rr.status===200)return {none:true};throw new Error(ghErr(r))}
+ if(!r.ok)throw new Error(ghErr(r));
+ var j=await r.json();return {sha:j.sha,text:b64d(j.content)}}
+async function ghWrite(c,text,sha){
+ var body={message:'손익 시뮬레이터 저장 '+today(),content:b64e(text)};if(sha)body.sha=sha;
+ var r=await fetch(ghUrl(c),{method:'PUT',headers:Object.assign({'Content-Type':'application/json'},ghHdr(c)),body:JSON.stringify(body)});
+ if(r.status===409||r.status===422)throw new Error('충돌: 다른 곳에서 먼저 저장됨');
+ if(!r.ok)throw new Error(ghErr(r));
+ return (await r.json()).content.sha}
+// 저장. force=true면 원격과 달라도 덮어씀. 처음 연결인데 원격에 이미 파일이 있으면 덮어쓰지 않고 멈춤.
+async function ghPush(force,quiet){
+ var c=ghCfg();if(!ghOn(c)||ghBusy)return;ghBusy=true;
+ try{
+  ghStatus('GitHub 저장 중...');
+  var text=JSON.stringify(state),rem=await ghRead(c);
+  if(!rem.none&&!force&&rem.sha!==c.sha){ghStatus('충돌: GitHub에 다른 저장본이 있음. 설정 탭에서 "불러오기" 또는 "덮어쓰기 저장" 선택');ghBusy=false;if(!quiet){ui.msg='GitHub에 다른 저장본이 있어 저장하지 않았습니다. 설정 탭에서 불러오기 또는 덮어쓰기 저장을 선택해 주세요.';render()}return}
+  c.sha=await ghWrite(c,text,rem.none?null:rem.sha);c.hash=ghHash(text);ghPut(c);
+  ghStatus('GitHub 저장됨 '+new Date().toTimeString().slice(0,5));
+  if(!quiet){ui.msg='GitHub에 저장했습니다: '+esc(c.repo)+'/'+esc(c.path);render()}
+ }catch(e){ghStatus('GitHub 저장 실패: '+e.message);if(!quiet){ui.msg='GitHub 저장 실패: '+esc(e.message);render()}}
+ ghBusy=false}
+// 불러오기: 현재 화면 내용을 GitHub 저장본으로 교체
+async function ghPull(quiet){
+ var c=ghCfg();if(!ghOn(c)||ghBusy)return;ghBusy=true;
+ try{
+  var rem=await ghRead(c);
+  if(rem.none){ghStatus('GitHub에 저장본 없음 (저장하면 새로 만들어짐)');if(!quiet){ui.msg='GitHub에 아직 저장본이 없습니다. "지금 저장"을 눌러 주세요.';render()}ghBusy=false;return}
+  var s=JSON.parse(rem.text);if(!(s&&s.sc&&s.sc.length))throw new Error('저장본 형식이 올바르지 않음');
+  state=upgrade(s);c.sha=rem.sha;c.hash=ghHash(JSON.stringify(state));ghPut(c);persist();
+  ghStatus('GitHub에서 불러옴 '+new Date().toTimeString().slice(0,5));
+  if(!quiet)ui.msg='GitHub 저장본을 불러왔습니다.';render()
+ }catch(e){ghStatus('GitHub 불러오기 실패: '+e.message);if(!quiet){ui.msg='GitHub 불러오기 실패: '+esc(e.message);render()}}
+ ghBusy=false}
+// 변경 후 4초 뒤 자동 저장 (자동 저장을 켠 경우). 마지막으로 저장한 내용과 같으면 건너뜀.
+function ghAuto(){
+ var c=ghCfg();if(!c.auto||!ghOn(c))return;
+ clearTimeout(ghTimer);ghTimer=setTimeout(function(){if(ghHash(JSON.stringify(state))!==c.hash)ghPush(false,true)},4000)}
+// 앱을 열 때: 로컬이 마지막 동기화 이후 그대로면 GitHub 최신본으로 갱신, 로컬에 변경이 있고 GitHub도 바뀌었으면 알림만
+async function ghStart(){
+ var c=ghCfg();if(!c.auto||!ghOn(c))return;
+ try{
+  var rem=await ghRead(c);if(rem.none||rem.sha===c.sha)return;
+  if(ghHash(JSON.stringify(state))===c.hash){ghBusy=false;await ghPull(true);ui.msg='GitHub 최신 저장본으로 갱신했습니다.';render()}
+  else{ui.msg='GitHub 저장본이 이 브라우저보다 새롭고, 이 브라우저에도 저장 안 된 변경이 있습니다. 설정 탭에서 불러오기 또는 덮어쓰기 저장을 선택해 주세요.';render()}
+ }catch(e){ghStatus('GitHub 확인 실패: '+e.message)}}
+function ghPanel(){
+ var c=ghCfg();
+ return '<div class="bt" style="margin-top:20px">GitHub에 저장 (보관함·작업·설정 전체)</div>'
+  +'<div class="note">입력한 저장소의 JSON 파일 1개로 저장·불러오기합니다. 다른 PC에서도 같은 설정을 넣으면 이어서 쓸 수 있습니다. 실제 업무 데이터가 들어가므로 저장소는 반드시 비공개(Private)로 만드세요. 토큰은 이 브라우저에만 보관되고 내보내기 파일에는 들어가지 않습니다.</div>'
+  +'<div class="f2"><span>저장소 (소유자/이름)</span><input class="in y tx" style="width:220px" data-gh="repo" placeholder="예: 내계정/pl-simulator-data" value="'+esc(c.repo||'')+'"></div>'
+  +'<div class="f2"><span>파일 경로</span><input class="in y tx" style="width:220px" data-gh="path" placeholder="예: data/state.json" value="'+esc(c.path||'data/state.json')+'"></div>'
+  +'<div class="f2"><span>토큰 (Fine-grained, Contents 읽기/쓰기)</span><input class="in y tx" style="width:220px" type="password" autocomplete="off" data-gh="token" placeholder="예: github_pat_..." value="'+esc(c.token||'')+'"></div>'
+  +'<div class="f2"><span>변경 후 자동 저장·열 때 자동 갱신</span><input type="checkbox" data-gh="auto"'+(c.auto?' checked':'')+'></div>'
+  +'<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" data-a="ghpush">지금 저장</button><button class="btn" data-a="ghpull">GitHub에서 불러오기</button><button class="btn" data-a="ghforce">덮어쓰기 저장</button></div>'
+  +'<div class="note" id="ghst" style="margin-top:6px">'+esc(ui.gh||(ghOn(c)?'연결 설정됨':'미설정'))+'</div>'}
 
 // ---------- 표시 도우미 ----------
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
@@ -516,7 +588,7 @@ function setTab(){
  h+='</tbody></table></div>'
   +'<div class="bt" style="margin-top:14px">직납(직매입 상세) 단가</div><div class="sc"><table><thead><tr><th>항목</th><th>단가 (원)</th></tr></thead><tbody>';
  PLT_ITEMS.forEach(function(it){h+='<tr><td>'+it[1]+'</td><td>'+N(V+'plt.'+it[0],(vd.plt||{})[it[0]])+'</td></tr>'});
- h+='</tbody></table></div><div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" data-a="test">예시 대조 검증 실행</button><button class="btn" data-a="resetst">설정을 초기값으로 복원</button></div></div>';
+ h+='</tbody></table></div><div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn" data-a="test">예시 대조 검증 실행</button><button class="btn" data-a="resetst">설정을 초기값으로 복원</button></div>'+ghPanel()+'</div>';
  return h}
 
 // ---------- 렌더 ----------
@@ -528,7 +600,7 @@ function render(keep){
  var h='<div class="top"><b>손익 시뮬레이터</b>'+tabs.map(function(t){return '<button class="tab'+(ui.tab===t[0]?' on':'')+'" data-a="tab" data-t="'+t[0]+'" title="'+t[2]+'"><span class="e">'+t[1]+'</span></button>'}).join('')
   +(w?'<span class="sp">'+ib('addsc','➕','안 추가')+ib('cap','📷','표 캡처',' data-id="capcards" data-n="시뮬레이션표"')+ib('cap','📊','구성비교',' data-id="capcmp" data-n="구성가격비교"')+ib('cap','⚖️','기준대비',' data-id="capvs" data-n="기준안대비"'+(two?'':' data-none="1"'))+ib('kakao','💬','카톡 요약')+'</span>':'')+'</div>';
  h+=w?work(os):ui.tab==='box'?boxTab():setTab();
- h+='<div class="lg"><span><i style="background:var(--y);border:1px solid var(--yb)"></i>직접 입력 ("예: ..."는 입력 안내)</span><span><i style="background:var(--sk);border:1px solid var(--skb)"></i>자동값 (비우면 자동, 입력하면 덮어씀)</span><span>글자만 있는 값은 자동 계산 결과</span><span style="margin-left:auto">v0.13 · 자동 저장 (이 브라우저)</span></div>';
+ h+='<div class="lg"><span><i style="background:var(--y);border:1px solid var(--yb)"></i>직접 입력 ("예: ..."는 입력 안내)</span><span><i style="background:var(--sk);border:1px solid var(--skb)"></i>자동값 (비우면 자동, 입력하면 덮어씀)</span><span>글자만 있는 값은 자동 계산 결과</span><span style="margin-left:auto">v0.14 · 자동 저장 (이 브라우저)</span></div>';
  document.getElementById('app').innerHTML=h;
  if(k){var e=document.querySelector('[data-p="'+k.p+'"]');if(e){e.focus();if(e.tagName!=='SELECT'&&e.type!=='checkbox'){e.value=k.v;try{e.setSelectionRange(k.s,k.s)}catch(x){}}}}
  persist()}
@@ -550,7 +622,9 @@ function readVal(el){
 function isTextField(el){return el.dataset.t==='s'&&el.tagName!=='SELECT'}
 var composing=false;
 function onInput(e){
- var el=e.target,p=el.dataset&&el.dataset.p;if(!p)return;
+ var el=e.target,p=el.dataset&&el.dataset.p;
+ if(el.dataset&&el.dataset.gh&&el.type!=='checkbox'){var gc=ghCfg();gc[el.dataset.gh]=el.value.trim();ghPut(gc);return}
+ if(!p)return;
  if(el.tagName==='SELECT'||el.type==='checkbox')return;        // change 이벤트에서 처리
  if(isTextField(el)){setPath(state,p,el.value);updateBinds();persist();return}
  if(e.isComposing||composing)return;                           // 숫자칸에서 한글 조합 중이면 대기
@@ -561,6 +635,7 @@ app.addEventListener('compositionend',function(e){composing=false;var el=e.targe
  if(el.dataset&&el.dataset.p){setPath(state,el.dataset.p,readVal(el));if(isTextField(el)){updateBinds();persist()}else render(true)}});
 app.addEventListener('input',onInput);
 app.addEventListener('change',function(e){var el=e.target;
+ if(el.dataset&&el.dataset.gh==='auto'){var ac=ghCfg();ac.auto=el.checked?1:0;ghPut(ac);ghAuto();return}
  if(el.id==='imp'){doImport(el);return}
  if(el.id==='vsel'){ui.vi=+el.value;render();return}
  if(el.id==='cpick'){if(el.value){var pp=el.value.split(':');copyFromSaved(+pp[0],+pp[1])}render();return}
@@ -619,6 +694,9 @@ app.addEventListener('click',function(e){
  else if(a==='blank'){state.sc=[newSc()];state.info=newInfo();state.base=0;state.ch='방송';state.title='';state.memo='';ui.tab='work'}
  else if(a==='addv'){var vs=state.ST.vendors,cv=clone(vs[Math.min(ui.vi||0,vs.length-1)]);cv.id='v'+Date.now();cv.name=cv.name+' 복사';vs.push(cv);ui.vi=vs.length-1}
  else if(a==='delv'){var vl=state.ST.vendors;if(vl.length>1){vl.splice(ui.vi||0,1);ui.vi=0}}
+ else if(a==='ghpush'){ghPush(false);return}
+ else if(a==='ghforce'){ghPush(true);return}
+ else if(a==='ghpull'){ghPull(false);return}
  else if(a==='resetst'){state.ST=clone(DEF_ST);ui.vi=0;ui.msg='설정과 물류사 견적을 초기값으로 되돌렸습니다.'}
  else if(a==='test'){var r=selfTest();ui.msg='예시 대조 (초기 설정 기준, 고정비 차감 전 CM)<br>'+r.map(function(x){return (x.ok?'일치 ':'불일치 ')+esc(x.name)+': 기대 '+x.exp+' / 계산 '+x.got.toFixed(2)}).join('<br>')}
  render()});
@@ -630,6 +708,7 @@ function doImport(inp){
  r.readAsText(f)}
 app.addEventListener('toggle',function(e){var k=e.target.dataset&&e.target.dataset.k;if(k)ui.open[k]=e.target.open},true);
 render();
+ghStart();
 </script>
 </body>
 </html>
