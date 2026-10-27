@@ -203,6 +203,8 @@ function calcSc(s,ch,ST){
  o.prSale=o.price*(1-o.prom);o.prSup=o.supply*(1-o.prom);
  o.prCm=o.prSup-o.prSup*o.lrate2-o.cost-o.sga1;o.prCmr=o.prSup?o.prCm/o.prSup:0;
  o.p100=o.weight>0?o.price/o.weight*100:0;
+ o.coupon=num(s.petc);o.final=Math.max(o.price-o.coupon,0);   // 최종 판매가 = 판매가 - 쿠폰(프로모션 기타·쿠폰). CM에는 기존대로 판관비로 반영되어 이중 차감 없음
+ o.p100f=o.weight>0?o.final/o.weight*100:0;
  o.once=bc||dm;
  o.tsales=o.sales*o.baseqty;o.tcm=o.cm*o.baseqty;
  o.bep=bc&&o.cmpre>0?o.fixtot/o.cmpre:0;
@@ -413,7 +415,7 @@ function card(i,o,multi){
  var s=state.sc[i],ch=state.ch,P='sc.'+i+'.',bc=ch==='방송',dm=ch==='직매입',b2=ch==='B2C',isb=i===state.base,K='c'+i+'_',e=eff(s),ST=state.ST,vd=vendorOf(ST,s),h,b;
  var chip=isb?'<span class="tag">기준안</span>':'<span class="chip2 '+(o.d.cm>=0?'up':'dn')+'">기준 대비 '+sgn(o.d.cm)+'원</span>';
  h='<div class="card'+(isb?' base':'')+'">'
-  +(multi?'<label class="cinc nocap" title="구성 가격 비교와 기준 대비에 이 안을 포함"><input type="checkbox" data-a="inc" data-i="'+i+'"'+(isb||s.exc!==1?' checked':'')+(isb?' disabled':'')+'> 비교 포함</label>':'')
+  +(multi?'<label class="cinc nocap" title="구성 가격 비교에 이 안을 포함"><input type="checkbox" data-a="inc" data-i="'+i+'"'+(isb||s.exc!==1?' checked':'')+(isb?' disabled':'')+'> 비교 포함</label>':'')
   +'<button class="cdel nocap" title="이 표 삭제" data-a="del" data-i="'+i+'"'+(state.sc.length>1?'':' disabled')+'>삭제 ×</button>'
   +kpi((o.rep?'1회차 ':'')+(o.once?'세트당 ':'개당 ')+'공헌이익',o.cm,o.cmr)+(o.rep?kpi('2회차~ 세트당 공헌이익 (고정비 제외)',o.cm2,o.cmr2):'')
   +'<div class="ks">'+(isb?'':chip)+'<span>100g당 '+(o.p100>0?fmt(o.p100)+'원':'내용량 입력 필요')+'</span>'+(o.once?'<span>1회 총 CM '+fmt(o.tcm)+'원</span>':'')+(bc&&o.bepo>0?'<span>BEP 주문 '+fmt(o.bepo)+'개</span>':'')+'</div>';
@@ -436,7 +438,7 @@ function card(i,o,multi){
  if(s.comps.length<8)b+='<button class="add nocap" data-a="addcomp" data-i="'+i+'">+ 구성품 추가</button>';
  h+=sx(K+'b','구성 (견적 원가)','원가 '+fmt(o.cost)+'원 · '+(o.weight>0?fmt(o.weight)+'g':'g 미입력'),b,true);
  // 3) 판관비 1
- b=row('프로모션 ARS',N(P+'ars',s.ars,'n','원','예: 5,000'))+row('프로모션 기타·쿠폰',N(P+'petc',s.petc,'n','원','예: 10,000'));
+ b=row('프로모션 ARS',N(P+'ars',s.ars,'n','원','예: 5,000'))+row('쿠폰·기타 프로모션 (최종 판매가에 반영)',N(P+'petc',s.petc,'n','원','예: 10,000'));
  ['로열티 1','로열티 2','밴더'].forEach(function(l,j){var Q=P+'roy.'+j+'.',r=s.roy[j];
   b+='<div class="ry"><div class="r"><span>'+l+'</span>'+TX(Q+'n',r.n,'예: IP·셀럽·밴더')+'</div><div class="l2">'
    +SEL(Q+'b',r.b,ROY_BASES,'y','(기준 선택)')+' x'+N(Q+'x',r.x,'p','')+' 요율'+N(Q+'r',r.r,'p','','예: 3')+'<span class="am">'+fmt(o.ra[j])+'원</span></div></div>'});
@@ -521,6 +523,8 @@ function cmpTable(os,ix){
  function line(label,fn){h+='<tr><td>'+label+'</td>';ix.forEach(function(i){h+='<td>'+fn(os[i],i)+'</td>'});h+='</tr>'}
  line('채널 / 방송 형태',function(o,i){return esc(es[i].chname||'-')+(bc?' · '+esc(es[i].btype):'')});
  line('판매가 (VAT 포함)',function(o){return fmt(o.price)+'원'});
+ if(ix.some(function(i){return os[i].coupon>0}))line('쿠폰 할인',function(o){return o.coupon>0?'-'+fmt(o.coupon)+'원 ('+pc(o.price?o.coupon/o.price:0,1)+')':'-'});
+ line('<b>최종 판매가 (쿠폰 적용)</b>',function(o){return '<b>'+fmt(o.final)+'</b>원'});
  line(dm?'채널 마진율':'수수료율',function(o,i){return pc(es[i].commrate,0)});
  if(dm)line('공급가',function(o){return fmt(o.supply)+'원'});
  if(bc||dm)line(bc?'목표 수량':'발주 수량',function(o,i){return fmt(es[i].target)+'개'});
@@ -529,6 +533,7 @@ function cmpTable(os,ix){
  line('<b>원가 합계</b>',function(o,i){return '<b>'+fmt(o.cost)+'</b>원'+dl(o.cost-b.cost,i,true)});
  line('원가율 (원가 / 세트 매출)',function(o){return pc(o.sales?o.cost/o.sales:0,1)});
  line('100g당 판매가',function(o){return o.p100>0?fmt(o.p100)+'원':'-'});
+ if(ix.some(function(i){return os[i].coupon>0}))line('100g당 최종가',function(o){return o.p100f>0?fmt(o.p100f)+'원':'-'});
  line('물류비',function(o){return fmt(o.logi)+'원'});
  line('<b>세트당 CM</b>',function(o,i){return '<b>'+fmt(o.cm)+'</b>원'+dl(o.cm-b.cm,i,false)});
  line('CM%'+(dm?' (공급가 대비)':''),function(o){return pc(o.cmr,1)});
@@ -536,15 +541,6 @@ function cmpTable(os,ix){
   line('<b>2회차~ 세트당 CM</b>',function(o,i){return '<b>'+fmt(o.cm2)+'</b>원'+dl(o.cm2-b.cm2,i,false)});
   line('2회차~ CM%',function(o){return pc(o.cmr2,1)})}
  return h+'</tbody></table></div></div>'}
-function vsBoxes(os,ix){
- var h='';
- ix.forEach(function(i){
-  if(i===state.base)return;
-  var o=os[i],d=o.d,rows=[['공급가 (판매가·수수료)',d.sup],['원가',d.cost],['판관비 1 (로열티 등)',d.sga1],['판관비 2 (방송 고정비)',d.fix],['물류비',d.logi]],r='',mx=1;
-  rows.forEach(function(x){mx=Math.max(mx,Math.abs(x[1]))});
-  rows.forEach(function(x){if(Math.abs(x[1])>=0.5)r+='<div class="bar2"><span>'+x[0]+'</span><div class="tr"><i class="'+(x[1]>0?'p':'n')+'" style="width:'+(Math.abs(x[1])/mx*50)+'%"></i></div><b class="'+(x[1]>0?'pos':'neg')+'">'+sgn(x[1])+'원</b></div>'});
-  h+='<div class="box"><div class="bt"><span data-bind="nm'+i+'">'+esc(nm(i))+'</span> vs 기준 <span data-bind="nm'+state.base+'">'+esc(nm(state.base))+'</span>: 세트당 '+sgn(d.cm)+'원 (CM% '+(d.cmr>=0?'+':'')+(d.cmr*100).toFixed(2)+'%p)</div>'+(r||'<div style="color:var(--tx2)">차이 없음</div>')+'</div>'});
- return h}
 function work(os){
  var b=os[state.base],ix=incl(),multi=os.length>1,h,i;
  h=''
@@ -560,8 +556,8 @@ function work(os){
   +'</div>'
   +'<div class="right"><div id="capcards"><div class="capt"><b data-bind="title">'+esc(state.title||'상품명 미입력')+'</b><span>'+CH_NAME[state.ch]+' / '+today()+' / '+(b.once?'1회 기준':'1개 기준')+'</span></div><div class="grid">';
  for(i=0;i<os.length;i++)h+=card(i,os[i],multi);
- h+='</div></div>'+(multi?'<div class="note" style="margin:10px 2px 0">각 카드의 "비교 포함"으로 고른 안만 아래 구성 가격 비교와 기준 대비에 나옵니다. (기준안은 항상 포함)</div>':'')
-  +cmpTable(os,ix)+'<div id="capvs">'+vsBoxes(os,ix)+'</div>';
+ h+='</div></div>'+(multi?'<div class="note" style="margin:10px 2px 0">각 카드의 "비교 포함"으로 고른 안만 아래 구성 가격 비교에 나옵니다. (기준안은 항상 포함)</div>':'')
+  +cmpTable(os,ix);
  return h+'</div></div>'}
 
 // ---------- 보관함 탭 (관리) ----------
@@ -603,10 +599,10 @@ function setTab(){
 function render(keep){
  var a=document.activeElement,k=null;
  if(keep&&a&&a.dataset&&a.dataset.p)k={p:a.dataset.p,v:a.value,s:a.selectionStart};
- var os=compute(),w=ui.tab==='work',two=incl().length>1;
+ var os=compute(),w=ui.tab==='work';
  var tabs=[['work','🧮','작업대'],['box','🗄️','보관함'],['set','⚙️','설정']];
  var h='<div class="top"><b>손익 시뮬레이터</b>'+tabs.map(function(t){return '<button class="tab'+(ui.tab===t[0]?' on':'')+'" data-a="tab" data-t="'+t[0]+'" title="'+t[2]+'"><span class="e">'+t[1]+'</span></button>'}).join('')
-  +(w?'<span class="sp">'+ib('addsc','➕','안 추가')+ib('cap','📷','표 캡처',' data-id="capcards" data-n="시뮬레이션표"')+ib('cap','📊','구성비교',' data-id="capcmp" data-n="구성가격비교"')+ib('cap','⚖️','기준대비',' data-id="capvs" data-n="기준안대비"'+(two?'':' data-none="1"'))+ib('kakao','💬','카톡 요약')+'</span>':'')+'</div>';
+  +(w?'<span class="sp">'+ib('addsc','➕','안 추가')+ib('cap','📷','표 캡처',' data-id="capcards" data-n="시뮬레이션표"')+ib('cap','📊','구성비교',' data-id="capcmp" data-n="구성가격비교"')+ib('kakao','💬','카톡 요약')+'</span>':'')+'</div>';
  h+=w?work(os):ui.tab==='box'?boxTab():setTab();
  h+='<div class="lg"><span><i style="background:var(--y);border:1px solid var(--yb)"></i>직접 입력 ("예: ..."는 입력 안내)</span><span><i style="background:var(--sk);border:1px solid var(--skb)"></i>자동값 (비우면 자동, 입력하면 덮어씀)</span><span>글자만 있는 값은 자동 계산 결과</span><span style="margin-left:auto">v0.14 · 자동 저장 (이 브라우저)</span></div>';
  document.getElementById('app').innerHTML=h;
@@ -672,7 +668,7 @@ function fixClone(doc,id){
  [].forEach.call(root.querySelectorAll('details.sx:not([open]) > .bd'),function(n){n.parentNode.removeChild(n)})}   // 접힌 섹션은 내용 없이 제목만
 function capture(id,name){
  var el=document.getElementById(id);
- if(!el||!el.textContent.trim()){ui.msg='캡처할 내용이 없습니다. 안을 2개 이상 비교에 포함해 주세요.';render();return}
+ if(!el||!el.textContent.trim()){ui.msg='캡처할 내용이 없습니다.';render();return}
  if(!window.html2canvas){ui.msg='캡처 도구를 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 새로고침해 주세요.';render();return}
  [].forEach.call(el.querySelectorAll('input,select,textarea'),function(n,i){n.setAttribute('data-cv',i)});
  html2canvas(el,{backgroundColor:getComputedStyle(document.body).backgroundColor,scale:2,
@@ -698,7 +694,7 @@ app.addEventListener('click',function(e){
  else if(a==='kakao'){ui.kakao=kakaoText(compute())}
  else if(a==='kclose'){ui.kakao=''}
  else if(a==='copy'){var t=document.getElementById('kt');t.select();var ok=false;try{ok=document.execCommand('copy')}catch(x){}ui.msg=ok?'복사했습니다.':'복사하지 못했습니다. 글자를 직접 선택해 복사해 주세요.'}
- else if(a==='cap'){if(b.dataset.none){ui.msg='기준 대비는 안이 2개 이상일 때 나옵니다. "안 추가"로 비교할 안을 만들어 주세요.';render();return}capture(b.dataset.id,b.dataset.n);return}
+ else if(a==='cap'){capture(b.dataset.id,b.dataset.n);return}
  else if(a==='save'){var nmv=document.getElementById('sn').value.trim();if(!nmv){ui.msg='저장 이름을 입력해 주세요.'}else{state.saved.unshift({name:nmv,ts:today(),data:snapshot()});ui.msg='저장했습니다: '+esc(nmv)}}
  else if(a==='load'){applySnap(state.saved[i].data);ui.msg='불러왔습니다: '+esc(state.saved[i].name)}
  else if(a==='delsaved'){state.saved.splice(i,1)}
