@@ -127,7 +127,7 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 <div id="app"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-/*VERSION*/var APP_VERSION='1.0015.0',APP_UPDATED='2026-10-28 08:56';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
+/*VERSION*/var APP_VERSION='1.0016.0',APP_UPDATED='2026-10-28 09:38';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
 /*ENGINE_START*/
 // 손익 계산 엔진 (화면과 분리. test_engine.js가 이 구간만 꺼내 예시 값과 대조)
 var ROY_BASES=['판매가(VAT포함)','매출(VAT제외)','공급가','원가합계','구성품1원가'];
@@ -430,7 +430,8 @@ function card(i,o,multi){
   +row(COMM[ch],N(P+'commrate',s.commrate,'p','%',dm?'예: 42':'예: 36'))
   +((bc||dm)?row(bc?'목표 수량 (1회)':'발주 수량 (1회)',N(P+'target',s.target,'n','개','예: 2,000')):'')
   +(b2?row('광고비율 (매출 대비)',N(P+'adrate',s.adrate,'p','%','예: 3')):'')
-  +row('원가 가산율',N(P+'markup',s.markup,'p','%','예: 5.3'))
+  +((bc||dm)?'<div class="note">목표 주문액 (VAT 포함) = 목표 수량 x 판매가 = <b>'+fmt(num(s.target)*o.price)+'원</b></div>':'')
+  +((bc&&s.markup==null)?'':row('원가 가산율',N(P+'markup',s.markup,'p','%','예: 5.3')))
   +(dm?'<div class="note">공급가 = 판매가 ÷ 1.1 x (1 - 마진율) = <b>'+fmt(o.supply)+'원</b></div>':'');
  h+=sx(K+'a','상품 정보·판매','판매가 '+fmt(o.price)+'원 · '+(dm?'마진 ':'수수료 ')+pc(e.commrate,0),b,true);
  // 2) 구성 (이 표만의 견적 원가)
@@ -527,6 +528,7 @@ function cmpTable(os,ix){
  line(dm?'채널 마진율':'수수료율',function(o,i){return pc(es[i].commrate,0)});
  if(dm)line('공급가',function(o){return fmt(o.supply)+'원'});
  if(bc||dm)line(bc?'목표 수량':'발주 수량',function(o,i){return fmt(es[i].target)+'개'});
+ if(bc||dm)line('목표 주문액 (VAT 포함)',function(o,i){return fmt(num(es[i].target)*o.price)+'원'});
  for(var j=0;j<mx;j++)(function(j){line('구성 '+(j+1),function(o,i){var x=es[i].comps[j];return x?'<span class="cn" data-bind="cc'+i+'_'+j+'">'+esc(x.n||('구성품 '+(j+1)))+'</span>'+fmt(x.p)+' x '+fmt(x.q)+' = <b>'+fmt(num(x.p)*num(x.q))+'</b>':'-'})})(j);
  if(ix.some(function(i){return num(es[i].markup)>0}))line('원가 가산율',function(o,i){return pc(es[i].markup,1)});
  line('<b>원가 합계</b>',function(o,i){return '<b>'+fmt(o.cost)+'</b>원'+dl(o.cost-b.cost,i,true)});
