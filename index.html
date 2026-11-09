@@ -128,7 +128,7 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 <div id="app"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-/*VERSION*/var APP_VERSION='1.0017.0',APP_UPDATED='2026-11-02 11:44';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
+/*VERSION*/var APP_VERSION='1.0018.0',APP_UPDATED='2026-11-09 11:01';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
 /*ENGINE_START*/
 // 손익 계산 엔진 (화면과 분리. test_engine.js가 이 구간만 꺼내 예시 값과 대조)
 var ROY_BASES=['판매가(VAT포함)','매출(VAT제외)','공급가','원가합계','구성품1원가'];
@@ -155,7 +155,7 @@ function newSc(){return {name:'',btype:'라이브',chname:'',price:null,commrate
  roy:[{n:'',b:'',x:1,r:null},{n:'',b:'',x:1,r:null},{n:'',b:'',x:1,r:null}],
  fix:{vcr:null,gma:null,cook:null,mat:null,panel:null,fetc:null},
  vendor:'',shipp:null,shipq:null,iov:{},ston:0,
- lmode:'rate',lrate:null,prom:null,lrate2:null,bq:null,bp:null,trk:null,dmfix:null,exc:0}}
+ lmode:'rate',lrate:null,prom:null,lrate2:null,bq:null,bp:null,trk:null,dmfix:null,exc:0,gma2:null}}
 function vendorOf(ST,s){var L=ST.vendors||[],i;for(i=0;i<L.length;i++)if(L[i].id===s.vendor)return L[i];return L[0]||null}
 function calcSc(s,ch,ST){
  var o={},bc=ch==='방송',dm=ch==='직매입',k;
@@ -175,8 +175,9 @@ function calcSc(s,ch,ST){
   var idx=ROY_BASES.indexOf(r.b);if(idx<0)return 0;
   var b=[o.price,o.sales,o.supply,o.cost,c1][idx];
   return b*num(r.x)*num(r.r)});
- o.petc=s.pmode==='pct'?o.sales*num(s.petcr):num(s.petc);   // 쿠폰·기타 프로모션: 금액(원) 또는 VAT 제외 매출 대비 비율. 둘 다 VAT 제외 기준
- o.sga1=num(s.ars)+o.petc+o.ad+o.ra[0]+o.ra[1]+o.ra[2];
+ o.pshare=bc?(isNil(ST.pshare)?0.5:num(ST.pshare)):1;         // 방송 프로모션(ARS·쿠폰)은 채널사와 반반 부담, 우리 몫만 판관비 반영
+ o.petcIn=s.pmode==='pct'?o.sales*num(s.petcr):num(s.petc);o.arsIn=num(s.ars);o.petc=o.petcIn*o.pshare;o.arsMine=o.arsIn*o.pshare;   // 쿠폰·기타 프로모션: 금액(원) 또는 VAT 제외 매출 대비 비율. 둘 다 VAT 제외 기준
+ o.sga1=o.arsMine+o.petc+o.ad+o.ra[0]+o.ra[1]+o.ra[2];
  o.fixtot=0;if(bc)for(k in s.fix)o.fixtot+=num(s.fix[k]);
  o.fixset=o.baseqty>0?o.fixtot/o.baseqty:0;
  var vd=vendorOf(ST,s);o.vname=vd?vd.name:'';
@@ -202,20 +203,21 @@ function calcSc(s,ch,ST){
  o.cmb=dm?o.supply:o.sales;                            // CM% 분모: 직매입은 공급가, 그 외는 VAT 제외 매출
  o.cmr=o.cmb?o.cm/o.cmb:0;
  o.rep=bc&&s.btype==='데이터';                          // 데이터(녹화): 2회차부터 방송 고정비 제외
- o.cm2=o.rep?o.cm+o.fixset:o.cm;o.cmr2=o.cmb?o.cm2/o.cmb:0;
+ o.fix2tot=o.rep?num(s.gma2):0;o.fix2set=o.baseqty>0?o.fix2tot/o.baseqty:0;   // 데이터 2회차~: 거마비(출연료)만 다시 발생
+ o.cm2=o.rep?o.cm+o.fixset-o.fix2set:o.cm;o.cmr2=o.cmb?o.cm2/o.cmb:0;
  o.prom=num(s.prom);o.prOn=dm&&o.prom>0;               // 직매입 행사: 공급가를 할인율만큼 낮추고 행사 물류비율 적용
  o.lrate2=isNil(s.lrate2)?ST.dmlog2:num(s.lrate2);
  o.prSale=o.price*(1-o.prom);o.prSup=o.supply*(1-o.prom);
  o.prCm=o.prSup-o.prSup*o.lrate2-o.cost-o.sga1;o.prCmr=o.prSup?o.prCm/o.prSup:0;
  o.p100=o.weight>0?o.price/o.weight*100:0;
- o.coupon=o.petc*(o.tax==='과세'?ST.vat:1);o.final=Math.max(o.price-o.coupon,0);   // 쿠폰 입력값은 판관비(VAT 제외)이므로 과세는 VAT 포함으로 환산해 VAT 포함 판매가에서 차감. CM에는 기존대로 판관비로 반영되어 이중 차감 없음
+ o.coupon=o.petcIn*(o.tax==='과세'?ST.vat:1);o.final=Math.max(o.price-o.coupon,0);   // 쿠폰 입력값은 판관비(VAT 제외)이므로 과세는 VAT 포함으로 환산해 VAT 포함 판매가에서 차감. CM에는 기존대로 판관비로 반영되어 이중 차감 없음
  o.p100f=o.weight>0?o.final/o.weight*100:0;
  o.once=bc||dm;
  o.tsales=o.sales*o.baseqty;o.tcm=o.cm*o.baseqty;
  o.bep=bc&&o.cmpre>0?o.fixtot/o.cmpre:0;
  o.bepo=o.conv>0?o.bep/o.conv:0;
  o.rd1=bc?o.tcm:0;
- o.rd2=bc?(s.btype==='데이터'?o.tcm+o.fixtot:o.tcm):0;
+ o.rd2=bc?(s.btype==='데이터'?o.tcm+o.fixtot-o.fix2tot:o.tcm):0;
  o.cum4=o.rd1+o.rd2*3;
  return o}
 var DRV=['공급가(판매가·수수료) 영향','원가 영향','판관비1(로열티 등) 영향','판관비2(방송 고정비) 영향','물류비 영향'];
@@ -236,7 +238,7 @@ var EX=[
  {id:'g1',ch:'방송',exp:7098.936364,title:'김 세트',sc:mk({name:'1안 김 원가 1,950원',chname:'채널 가',price:70900,commrate:0.35,target:3800,tax:'과세',temp:'상온',comps:C([['캔 김 30g (부자재 포함)',1950,16,30]]),roy:[R('IP 가','원가합계',1,0.027),NOR,R('밴더','공급가',1,0.018)],fix:{vcr:0,gma:0,cook:300000,mat:200000,panel:90000,fetc:0}})},
  {id:'g2',ch:'방송',exp:5034.136364,title:'김 세트',sc:mk({name:'2안 원가 2,100원·박스 600원',chname:'채널 가',price:70900,commrate:0.35,target:3800,tax:'과세',temp:'상온',comps:C([['캔 김 30g (부자재 포함)',2100,16,30]]),roy:[R('IP 가','원가합계',1,0.027),NOR,R('밴더','공급가',1,0.018)],fix:{vcr:0,gma:0,cook:300000,mat:200000,panel:90000,fetc:0},iov:{3:{p:600}}})},
  {id:'jb',ch:'방송',exp:9966.596364,title:'셀럽 가 족발',sc:mk({name:'족발 / 채널 다 (데이터)',btype:'데이터',chname:'채널 다',price:60900,commrate:0.36,target:2100,tax:'과세',temp:'냉동',comps:C([['순살 족발 200G',2700,6,200],['미니족 250G',2700,2,250]]),roy:[R('셀럽 가','공급가',1,0.0225),NOR,R('에이전시','공급가',1,0.009)],fix:{vcr:0,gma:4000000,cook:700000,mat:200000,panel:90000,fetc:0}})},
- {id:'hu',ch:'방송',exp:12989,title:'예시 갈비+사리',sc:mk({name:'갈비7+감자사리3 / 채널 나',chname:'채널 나',price:140000,commrate:0.34,target:2100,tax:'과세',temp:'냉동',comps:C([['갈비 300G',8000,7,300],['감자사리면 180G',800,3,180]]),ars:5000,roy:[R('IP 나','판매가(VAT포함)',0.6,0.036),NOR,R('밴더','공급가',1,0.018)],fix:{vcr:0,gma:1500000,cook:1000000,mat:200000,panel:90000,fetc:0},iov:{1:{p:1110},5:{p:114},7:{p:637}}})},
+ {id:'hu',ch:'방송',exp:15489,title:'예시 갈비+사리',sc:mk({name:'갈비7+감자사리3 / 채널 나',chname:'채널 나',price:140000,commrate:0.34,target:2100,tax:'과세',temp:'냉동',comps:C([['갈비 300G',8000,7,300],['감자사리면 180G',800,3,180]]),ars:5000,roy:[R('IP 나','판매가(VAT포함)',0.6,0.036),NOR,R('밴더','공급가',1,0.018)],fix:{vcr:0,gma:1500000,cook:1000000,mat:200000,panel:90000,fetc:0},iov:{1:{p:1110},5:{p:114},7:{p:637}}})},
  {id:'cb',ch:'방송',exp:7502.74,title:'IP 다 굴비',sc:mk({name:'굴비 / 채널 라 (데이터)',btype:'데이터',chname:'채널 라',price:65900,commrate:0.3,target:1500,tax:'면세',temp:'냉동',comps:C([['굴비 120G * 8미',30900,1,960],['사은품',100,8,0]]),roy:[R('IP 다','원가합계',1,0.0477),NOR,R('에이전시','공급가',1,0.009)],fix:{vcr:0,gma:0,cook:1100000,mat:200000,panel:90000,fetc:0},shipq:1,iov:{0:{p:0},1:{p:1400,q:1},4:{p:150,q:8},5:{q:0},6:{q:0},7:{q:0}}})},
  {id:'yg',ch:'공구',exp:8284,title:'예시 야채찜',sc:mk({name:'야채찜 / 공구',chname:'공동구매',price:60900,commrate:0.24,tax:'면세',temp:'냉동',comps:C([['야채찜 230G',2200,15,230]]),iov:{0:{p:850}}})},
  {id:'ym',ch:'B2C',exp:7262,title:'예시 야채찜',sc:mk({name:'야채찜 / 채널 나 미리주문',chname:'채널 나',price:40900,commrate:0.32,tax:'면세',temp:'냉동',comps:C([['야채찜 230G',2200,7,230]])})},
@@ -422,7 +424,7 @@ function card(i,o,multi){
  h='<div class="card'+(isb?' base':'')+'">'
   +(multi?'<label class="cinc nocap" title="구성 가격 비교에 이 안을 포함"><input type="checkbox" data-a="inc" data-i="'+i+'"'+(isb||s.exc!==1?' checked':'')+(isb?' disabled':'')+'> 비교 포함</label>':'')
   +'<button class="cdel nocap" title="이 표 삭제" data-a="del" data-i="'+i+'"'+(state.sc.length>1?'':' disabled')+'>삭제 ×</button>'
-  +kpi((o.rep?'1회차 ':'')+(o.once?'세트당 ':'개당 ')+'공헌이익',o.cm,o.cmr)+(o.rep?kpi('2회차~ 세트당 공헌이익 (고정비 제외)',o.cm2,o.cmr2):'')
+  +kpi((o.rep?'1회차 ':'')+(o.once?'세트당 ':'개당 ')+'공헌이익',o.cm,o.cmr)+(o.rep?kpi('2회차~ 세트당 공헌이익 ('+(o.fix2tot>0?'거마비만 반영':'고정비 제외')+')',o.cm2,o.cmr2):'')
   +'<div class="ks">'+(isb?'':chip)+'<span>100g당 '+(o.p100>0?fmt(o.p100)+'원':'내용량 입력 필요')+'</span>'+(o.once?'<span>1회 총 CM '+fmt(o.tcm)+'원</span>':'')+(bc&&o.bepo>0?'<span>BEP 주문 '+fmt(o.bepo)+'개</span>':'')+'</div>';
  // 1) 상품 정보·판매 (이 표만의 값)
  b=(bc?row('방송 형태',SEL(P+'btype',s.btype,BTYPES)):'')
@@ -431,7 +433,7 @@ function card(i,o,multi){
   +row(COMM[ch],N(P+'commrate',s.commrate,'p','%',dm?'예: 42':'예: 36'))
   +((bc||dm)?row(bc?'목표 수량 (1회)':'발주 수량 (1회)',N(P+'target',s.target,'n','개','예: 2,000')):'')
   +(b2?row('광고비율 (매출 대비)',N(P+'adrate',s.adrate,'p','%','예: 3')):'')
-  +((bc||dm)?'<div class="note">목표 주문액 (VAT 포함) = 목표 수량 x 판매가 = <b>'+fmt(num(s.target)*o.price)+'원</b></div>':'')
+  +((bc||dm)?'<div class="note">목표 주문액 (VAT 제외) = 목표 수량 x 판매가 / 1.1 = <b>'+fmt(num(s.target)*o.sales)+'원</b></div>':'')
   +((bc&&s.markup==null)?'':row('원가 가산율',N(P+'markup',s.markup,'p','%','예: 5.3')))
   +(dm?'<div class="note">공급가 = 판매가 ÷ 1.1 x (1 - 마진율) = <b>'+fmt(o.supply)+'원</b></div>':'');
  h+=sx(K+'a','상품 정보·판매','판매가 '+fmt(o.price)+'원 · '+(dm?'마진 ':'수수료 ')+pc(e.commrate,0),b,true);
@@ -444,14 +446,14 @@ function card(i,o,multi){
  if(s.comps.length<8)b+='<button class="add nocap" data-a="addcomp" data-i="'+i+'">+ 구성품 추가</button>';
  h+=sx(K+'b','구성 (견적 원가)','원가 '+fmt(o.cost)+'원 · '+(o.weight>0?fmt(o.weight)+'g':'g 미입력'),b,true);
  // 3) 판관비 1
- b=row('프로모션 ARS',N(P+'ars',s.ars,'n','원','예: 5,000'))+row('쿠폰·기타 프로모션 (VAT 제외)',SEL(P+'pmode',s.pmode==='pct'?'pct':'amt',['amt','pct'],'y sm',null,['금액 (원)','비율 (%)'])+(s.pmode==='pct'?N(P+'petcr',s.petcr,'p','%','예: 10'):N(P+'petc',s.petc,'n','원','예: 10,000')));
+ b=(bc?'<div class="note">방송 프로모션은 채널사와 반반 부담합니다. 입력한 총액의 '+pc(o.pshare,0)+'만 우리 비용으로 반영됩니다.'+(o.arsIn>0||o.petcIn>0?' 우리 부담: ARS <b>'+fmt(o.arsMine)+'원</b> · 쿠폰·기타 <b>'+fmt(o.petc)+'원</b>':'')+'</div>':'')+row(bc?'프로모션 ARS (총액)':'프로모션 ARS',N(P+'ars',s.ars,'n','원','예: 5,000'))+row('쿠폰·기타 프로모션 (VAT 제외)',SEL(P+'pmode',s.pmode==='pct'?'pct':'amt',['amt','pct'],'y sm',null,['금액 (원)','비율 (%)'])+(s.pmode==='pct'?N(P+'petcr',s.petcr,'p','%','예: 10'):N(P+'petc',s.petc,'n','원','예: 10,000')));
  ['로열티 1','로열티 2','밴더'].forEach(function(l,j){var Q=P+'roy.'+j+'.',r=s.roy[j];
   b+='<div class="ry"><div class="r"><span>'+l+'</span>'+TX(Q+'n',r.n,'예: IP·셀럽·밴더')+'</div><div class="l2">'
    +SEL(Q+'b',r.b,ROY_BASES,'y','(기준 선택)')+' x'+N(Q+'x',r.x,'p','')+' 요율'+N(Q+'r',r.r,'p','','예: 3')+'<span class="am">'+fmt(o.ra[j])+'원</span></div></div>'});
  h+=sx(K+'c','판관비 1','-'+fmt(o.sga1)+'원',b,false);
  // 4) 판관비 2 (방송만)
  if(bc){
-  b='';[['vcr','VCR촬영비'],['gma','거마비'],['cook','요리팀비'],['mat','재료비'],['panel','판넬비'],['fetc','기타(동판비 등)']].forEach(function(a){b+=row(a[1],N(P+'fix.'+a[0],s.fix[a[0]],'n','원','예: 300,000'))});
+  b='';[['vcr','VCR촬영비'],['gma','거마비'],['cook','요리팀비'],['mat','재료비'],['panel','판넬비'],['fetc','기타(동판비 등)']].forEach(function(a){b+=row(a[1],N(P+'fix.'+a[0],s.fix[a[0]],'n','원','예: 300,000'));if(a[0]==='gma'&&s.btype==='데이터')b+=row('2회차~ 거마비 (출연료)',N(P+'gma2',s.gma2,'n','원','예: 1,500,000'))});
   h+=sx(K+'d','판관비 2 (방송 고정비)',fmt(o.fixtot)+'원 / 1회 (세트당 -'+fmt(o.fixset)+')',b,false)}
  // 5) 물류
  var vsel=row('물류사',SEL(P+'vendor',vd?vd.id:'',ST.vendors.map(function(v){return v.id}),'y',null,ST.vendors.map(function(v){return v.name})));
@@ -529,7 +531,7 @@ function cmpTable(os,ix){
  line(dm?'채널 마진율':'수수료율',function(o,i){return pc(es[i].commrate,0)});
  if(dm)line('공급가',function(o){return fmt(o.supply)+'원'});
  if(bc||dm)line(bc?'목표 수량':'발주 수량',function(o,i){return fmt(es[i].target)+'개'});
- if(bc||dm)line('목표 주문액 (VAT 포함)',function(o,i){return fmt(num(es[i].target)*o.price)+'원'});
+ if(bc||dm)line('목표 주문액 (VAT 제외)',function(o,i){return fmt(num(es[i].target)*o.sales)+'원'});
  for(var j=0;j<mx;j++)(function(j){line('구성 '+(j+1),function(o,i){var x=es[i].comps[j];return x?'<span class="cn" data-bind="cc'+i+'_'+j+'">'+esc(x.n||('구성품 '+(j+1)))+'</span>'+fmt(x.p)+' x '+fmt(x.q)+' = <b>'+fmt(num(x.p)*num(x.q))+'</b>':'-'})})(j);
  if(ix.some(function(i){return num(es[i].markup)>0}))line('원가 가산율',function(o,i){return pc(es[i].markup,1)});
  line('<b>원가 합계</b>',function(o,i){return '<b>'+fmt(o.cost)+'</b>원'+dl(o.cost-b.cost,i,true)});
@@ -628,6 +630,12 @@ function readVal(el){
  return v}
 function isTextField(el){return el.dataset.t==='s'&&el.tagName!=='SELECT'}
 var composing=false;
+function liveFmt(el){                                          // 숫자칸: 입력하는 즉시 세 자리마다 쉼표 (커서 위치 유지)
+ var v=el.value,pos=el.selectionStart,d=v.slice(0,pos).replace(/[^0-9]/g,'').length,neg=/^\s*-/.test(v),r=v.replace(/[^0-9.]/g,''),i=r.indexOf('.');
+ if(r===''&&!neg)return;
+ var ip=(i<0?r:r.slice(0,i)).replace(/\B(?=(\d{3})+(?!\d))/g,','),out=(neg?'-':'')+ip+(i<0?'':'.'+r.slice(i+1).replace(/\./g,''));
+ el.value=out;var n=0,c=0;if(d>0)for(c=0;c<out.length;c++){if(/\d/.test(out[c])&&++n===d){c++;break}}
+ try{el.setSelectionRange(c,c)}catch(x){}}
 function onInput(e){
  var el=e.target,p=el.dataset&&el.dataset.p;
  if(el.dataset&&el.dataset.gh&&el.type!=='checkbox'){var gc=ghCfg();gc[el.dataset.gh]=el.value.trim();ghPut(gc);return}
@@ -635,6 +643,7 @@ function onInput(e){
  if(el.tagName==='SELECT'||el.type==='checkbox')return;        // change 이벤트에서 처리
  if(isTextField(el)){setPath(state,p,el.value);updateBinds();persist();return}
  if(e.isComposing||composing)return;                           // 숫자칸에서 한글 조합 중이면 대기
+ if(el.dataset.t==='n')liveFmt(el);
  setPath(state,p,readVal(el));render(true)}
 var app=document.getElementById('app');
 app.addEventListener('compositionstart',function(){composing=true});
