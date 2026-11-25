@@ -116,16 +116,19 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 .f2{display:flex;justify-content:space-between;align-items:center;max-width:420px;padding:4px 0;color:var(--tx2)}
 .f2 .in.y{width:112px}
 .brand{display:flex;flex-direction:column;margin-right:24px;flex-shrink:0;line-height:1.25}.top .brand b{margin:0}.brand small{font-size:10.5px;color:var(--tx3);white-space:nowrap}
-.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;line-height:1.1;min-width:44px}
-.tab .e,.ib .e{font-size:20px}
-.ib{border:1px solid var(--bd2);background:var(--pn);border-radius:10px;min-width:40px;height:36px;justify-content:center;padding:0 8px;display:flex;flex-direction:column;align-items:center;line-height:1.1}
-.ib:hover{background:var(--pn2)}.ib .l{color:var(--tx2)}
+.tab{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:6px;line-height:1;min-width:0;height:36px;padding:0 12px;margin:0 1px;border:0;border-radius:9px;color:var(--tx2);font-weight:600;font-size:13.5px;white-space:nowrap}
+.tab:hover{background:var(--pn2);color:var(--tx)}.tab.on{background:var(--pn2);color:var(--tx);border-bottom-color:transparent}
+.ico{flex-shrink:0;display:block}nav.tabs{display:flex;align-items:center}
+
+.ib{border:1px solid var(--bd2);background:var(--pn);border-radius:10px;height:34px;padding:0 12px;display:flex;flex-direction:row;align-items:center;gap:6px;font-weight:600;font-size:13px;white-space:nowrap;color:var(--tx)}
+.ib:hover{background:var(--pn2)}.ib .ico{color:var(--tx2)}
 .cinc{position:absolute;top:10px;left:14px;z-index:1;font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:4px;cursor:pointer}
 .cv{display:inline-flex;align-items:center;white-space:nowrap;overflow:hidden;box-sizing:border-box;height:28px}
 .nmi.cv{display:flex;height:auto;min-height:22px}
 
-.tab.tbeta .e{font-size:18px}.tab.tbeta small{font-size:9px;font-weight:800;letter-spacing:.5px;color:#fff;background:#4f46e5;border-radius:4px;padding:0 4px;margin-top:1px}
-.bx{--bxac:#4f46e5;--bxacbg:#eef0ff;max-width:1440px;margin:0 auto;padding:0 0 24px}
+.tab.tbeta{color:#4f46e5}.tab.tbeta.on{background:#eef0ff}.tab.tbeta small{font-size:9px;font-weight:800;letter-spacing:.4px;color:#fff;background:#4f46e5;border-radius:4px;padding:1px 4px}
+@media(prefers-color-scheme:dark){.tab.tbeta{color:#a5b4fc}.tab.tbeta.on{background:#26285a}}
+.bx{--bxac:#4f46e5;--bxacbg:#eef0ff;padding:0 0 24px}
 @media(prefers-color-scheme:dark){.bx{--bxac:#a5b4fc;--bxacbg:#26285a}}
 .bx .pop{margin:12px 24px 0}
 .bxhd{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:18px 24px 0}
@@ -145,6 +148,8 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 .bxboard.c4{gap:10px}.c4 .bxk{padding:12px 12px 10px;border-radius:14px}.c4 .bxbig{font-size:25px}.c4 .bxbig small{font-size:11.5px}.c4 .bxkh{font-size:12.5px}.c4 .bxr{font-size:11.5px}.c4 .bxd,.c4 .bxtag{font-size:10.5px}.c4 .bxl,.c4 .bxinc{font-size:11px}
 .c6 .bxbig{font-size:21px}.c6 .bxr{font-size:11px;flex-direction:column;gap:0}.c6 .bxr b{text-align:left}.c6 .bxkh{flex-direction:column;gap:2px}
 .bxboard{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:14px;padding:16px 24px;background:var(--bg)}
+.bxsum{background:var(--pn2);border:1px dashed var(--bd2);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.bxsumh{font-weight:700;font-size:13.5px;margin-bottom:2px}.bxsumr{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--tx2)}.bxsumr b{color:var(--tx);text-align:right}.bxsumr b.pos{color:var(--pos)}.bxsumr b.neg{color:var(--neg)}.bxsumd{font-size:12px;color:var(--tx3);margin:-2px 0 4px}
 .bxcap{display:none;grid-column:1/-1;font-size:13px;color:var(--tx2)}.bxcap b{font-size:17px;color:var(--tx);margin-right:6px}
 .bxk{position:relative;background:var(--pn);border:1px solid var(--bd);border-radius:16px;padding:16px 16px 12px;cursor:pointer;text-align:left;font:inherit;color:inherit}
 .bxk:hover{border-color:var(--bd2)}
@@ -181,20 +186,21 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 .bxcmp th,.bxcmp td{padding:7px 8px;vertical-align:top}
 .bxcmp thead th{text-align:right;color:var(--tx);font-size:12.5px}
 .bxcmp thead th{min-width:150px;white-space:normal}.bxcmp thead th:first-child{min-width:0}.bxcmp thead .nmi{display:block;text-align:right;font-size:13px;width:100%}.bxcmp thead .bxtag{display:inline-block;margin-top:3px}
-.bxwrap.wide{grid-template-columns:minmax(0,1fr)}.bxwrap.wide .bxin{max-width:900px}
+.bxwrap.wide{grid-template-columns:minmax(0,1fr)}.bxwrap.wide .bxin{max-width:none}
+@media(min-width:1600px){.bxwrap,.bxwrap.wide{grid-template-columns:minmax(460px,.8fr) minmax(0,1.2fr)}}
 .bxcmp th[scope=row]{color:var(--tx2);font-weight:500;font-size:12.5px;text-align:left}
 .bxcmp tr.em th,.bxcmp tr.em td{font-weight:700;color:var(--tx)}
 .bxcc{display:flex;flex-direction:column;align-items:flex-end;line-height:1.35}.bxcc span:first-child{font-weight:600}.bxcc .mut{font-size:11.5px;color:var(--tx3)}
 .bxcmp small.neg,.bxcmp small.pos{font-size:11px;margin-left:3px}
 @media(max-width:1000px){.bxwrap{grid-template-columns:minmax(0,1fr)}.bxsv{margin-left:0}.bxboard.c4{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:640px){.top .brand{margin-right:6px}.bxboard,.bxboard.c4{grid-template-columns:minmax(0,1fr)}.bxsave select.in{width:100%}.top .brand small{display:none}.tab{padding:0 7px;min-width:38px}.bxseg{display:grid;grid-template-columns:1fr 1fr;width:100%}.bxseg button{border-bottom:1px solid var(--bd)}.bxhd,.bxboard,.bxwrap{padding-left:14px;padding-right:14px}.bxsave,.bxwarn,.bx .pop{margin-left:14px;margin-right:14px}.bxboard{grid-template-columns:minmax(0,1fr)}.bxtitle{flex-basis:100%}}
+@media(max-width:640px){.top .brand{margin-right:6px}.bxboard,.bxboard.c4{grid-template-columns:minmax(0,1fr)}.bxsave select.in{width:100%}.top .brand{display:none}.top nav.tabs{width:100%;display:flex;justify-content:space-between;padding:6px 0 4px}.tab{padding:0 8px;font-size:13px;gap:4px;flex:1}.tab.tbeta small{display:none}.ib{padding:0 8px;font-size:12px;gap:4px}.top .sp{gap:5px;flex-wrap:nowrap;overflow-x:auto;justify-content:space-between}.bxseg{display:grid;grid-template-columns:1fr 1fr;width:100%}.bxseg button{border-bottom:1px solid var(--bd)}.bxhd,.bxboard,.bxwrap{padding-left:14px;padding-right:14px}.bxsave,.bxwarn,.bx .pop{margin-left:14px;margin-right:14px}.bxboard{grid-template-columns:minmax(0,1fr)}.bxtitle{flex-basis:100%}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-/*VERSION*/var APP_VERSION='1.0023.0',APP_UPDATED='2026-11-25 11:20';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
+/*VERSION*/var APP_VERSION='1.0024.0',APP_UPDATED='2026-11-25 11:29';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
 /*ENGINE_START*/
 // 손익 계산 엔진 (화면과 분리. test_engine.js가 이 구간만 꺼내 예시 값과 대조)
 var ROY_BASES=['판매가(VAT포함)','매출(VAT제외)','공급가','원가합계','구성품1원가'];
@@ -471,7 +477,17 @@ function autoName(i,noCost){
 function nm(i){return state.sc[i].name||autoName(i)}
 function row(l,h){return '<div class="r"><span>'+l+'</span><div class="c">'+h+'</div></div>'}
 function sx(k,t,sum,body,def){var op=ui.open[k];if(op===undefined)op=def;return '<details class="sx" data-k="'+k+'"'+(op?' open':'')+'><summary><span>'+t+'</span><b>'+sum+'</b></summary><div class="bd">'+body+'</div></details>'}
-function ib(a,e,l,x){return '<button class="ib" data-a="'+a+'" title="'+l+'" aria-label="'+l+'"'+(x||'')+'><span class="e">'+e+'</span></button>'}
+// 상단 메뉴 선 아이콘 (24x24, 테두리 선)
+var ICO={work:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>',
+ box:'<rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/>',
+ set:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+ beta:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3M7.5 14h9"/>',
+ add:'<path d="M5 12h14M12 5v14"/>',
+ cam:'<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/>',
+ table:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/>',
+ msg:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>'};
+function svgI(k){return '<svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICO[k]+'</svg>'}
+function ib(a,e,l,x){return '<button class="ib" data-a="'+a+'" title="'+l+'"'+(x||'')+'>'+svgI(e)+'<span class="l">'+l+'</span></button>'}
 // 비교에 포함할 안 (기준안은 항상 포함)
 function incl(){return state.sc.map(function(s,i){return i}).filter(function(i){return i===state.base||state.sc[i].exc!==1})}
 
@@ -658,6 +674,17 @@ function bCard(i,o,mx){
   +'<button class="bxl" data-a="bdup" data-i="'+i+'">복제</button>'
   +'<button class="bxl neg" data-a="del" data-i="'+i+'"'+(state.sc.length>1?'':' disabled')+'>삭제</button></div></div>'}
 // 구성 가격 비교 (베타): 구성품별 개당 중량·단가, 소계 중량·원가, 총 중량, 100g당 원가 추가
+function bSum(os,span){
+ var best=0,b=os[state.base],h='<div class="bxsum nocap" style="grid-column:span '+span+'"><div class="bxsumh">🔎 비교 요약</div>';
+ os.forEach(function(o,k){if(o.cm>os[best].cm)best=k});
+ if(os.length<2)return h+'<div class="bxsumr">안이 하나뿐입니다. 상단 <b>안 추가</b>로 기준안을 복사한 뒤 판매가·구성·원가를 바꿔 비교해 보세요.</div>'
+  +'<div class="bxsumr"><span>100g당 판매가</span><b>'+(b.p100>0?fmt(b.p100)+'원':'내용량 입력 필요')+'</b></div>'
+  +(state.ch==='방송'?'<div class="bxsumr"><span>손익분기 주문 수 (BEP)</span><b>'+(b.bepo>0?fmt(b.bepo)+'개':'-')+'</b></div>':'')+'</div>';
+ h+='<div class="bxsumr"><span>세트당 CM이 가장 높은 안</span><b>'+esc(nm(best))+' · '+fmt(os[best].cm)+'원</b></div>';
+ os.forEach(function(o,k){if(k===state.base)return;
+  h+='<div class="bxsumr"><span>'+esc(nm(k))+' vs 기준</span><b class="'+(o.d.cm>=0?'pos':'neg')+'">'+sgn(o.d.cm)+'원 ('+(o.d.cmr>=0?'+':'')+(o.d.cmr*100).toFixed(1)+'%p)</b></div>'
+   +'<div class="bxsumd">주요 원인: '+esc(o.drv)+'</div>'});
+ return h+'</div>'}
 function cmpTable2(os,ix){
  var b=os[state.base],bc=state.ch==='방송',dm=state.ch==='직매입',es=state.sc.map(eff),mx=0,
  h='<div class="bxp" id="capcmp"><div class="bxh3">📊 구성 가격 비교 <small>'+esc(state.title||'')+'</small></div><div class="bxtw"><table class="bxcmp"><thead><tr><th></th>';
@@ -704,6 +731,7 @@ function betaTab(os){
    :'<button class="btn pri" data-a="save">💾 새로 저장</button>')+'</span></div>'
   +'<div class="bxboard'+(n>=4?' c4':'')+(n>=6?' c6':'')+'" id="capboard" style="--cols:'+cols+'"><div class="bxcap nocap-only"><b>'+esc(state.title||'상품명 미입력')+'</b> '+CH_NAME[state.ch]+' / '+today()+'</div>';
  os.forEach(function(x,k){h+=bCard(k,x,mx)});
+ if(n<3)h+=bSum(os,3-n);
  h+='</div>'
   +'<div class="bxwrap'+(n>=4?' wide':'')+'"><div class="bxp bxin"><div class="bxh3">✏️ <span data-bind="nm'+i+'">'+esc(nm(i))+'</span> 입력<span class="bxtabs">'
   +state.sc.map(function(x,k){return '<button class="'+(k===i?'on':'')+'" data-a="bsel" data-i="'+k+'">'+(k+1)+'안</button>'}).join('')+'</span></div>'
@@ -753,10 +781,10 @@ function render(keep){
  var a=document.activeElement,k=null;
  if(keep&&a&&a.dataset&&a.dataset.p)k={p:a.dataset.p,v:a.value,s:a.selectionStart};
  var os=compute(),w=ui.tab==='work',bt=ui.tab==='beta';
- var tabs=[['work','🧮','작업대'],['box','🗄️','보관함'],['set','⚙️','설정'],['beta','🧪','베타 (새 화면)']];
- var h='<div class="top"><div class="brand"><b>P&amp;L Simulator</b><small id="ver">v'+APP_VERSION+' · 업데이트 '+APP_UPDATED+'</small></div>'+tabs.map(function(t){return '<button class="tab'+(ui.tab===t[0]?' on':'')+(t[0]==='beta'?' tbeta':'')+'" data-a="tab" data-t="'+t[0]+'" title="'+t[2]+'"><span class="e">'+t[1]+'</span>'+(t[0]==='beta'?'<small>BETA</small>':'')+'</button>'}).join('')
-  +(bt?'<span class="sp">'+ib('addsc','➕','안 추가')+ib('cap','📷','결과 캡처',' data-id="capboard" data-n="결과비교"')+ib('cap','📊','구성비교',' data-id="capcmp" data-n="구성가격비교"')+ib('kakao','💬','카톡 요약')+'</span>':'')
-  +(w?'<span class="sp">'+ib('addsc','➕','안 추가')+ib('cap','📷','표 캡처',' data-id="capcards" data-n="시뮬레이션표"')+ib('cap','📊','구성비교',' data-id="capcmp" data-n="구성가격비교"')+ib('kakao','💬','카톡 요약')+'</span>':'')+'</div>';
+ var tabs=[['work','작업대'],['box','보관함'],['set','설정'],['beta','베타']];
+ var h='<div class="top"><div class="brand"><b>P&amp;L Simulator</b><small id="ver">v'+APP_VERSION+' · 업데이트 '+APP_UPDATED+'</small></div><nav class="tabs">'+tabs.map(function(t){return '<button class="tab'+(ui.tab===t[0]?' on':'')+(t[0]==='beta'?' tbeta':'')+'" data-a="tab" data-t="'+t[0]+'" title="'+(t[0]==='beta'?'베타 (새 화면)':t[1])+'">'+svgI(t[0])+'<span>'+t[1]+'</span>'+(t[0]==='beta'?'<small>NEW</small>':'')+'</button>'}).join('')+'</nav>'
+  +(bt?'<span class="sp">'+ib('addsc','add','안 추가')+ib('cap','cam','결과 캡처',' data-id="capboard" data-n="결과비교"')+ib('cap','table','구성비교',' data-id="capcmp" data-n="구성가격비교"')+ib('kakao','msg','카톡 요약')+'</span>':'')
+  +(w?'<span class="sp">'+ib('addsc','add','안 추가')+ib('cap','cam','표 캡처',' data-id="capcards" data-n="시뮬레이션표"')+ib('cap','table','구성비교',' data-id="capcmp" data-n="구성가격비교"')+ib('kakao','msg','카톡 요약')+'</span>':'')+'</div>';
  h+=w?work(os):bt?betaTab(os):ui.tab==='box'?boxTab():setTab();
  h+='<div class="lg"><span><i style="background:var(--y);border:1px solid var(--yb)"></i>직접 입력 ("예: ..."는 입력 안내)</span><span><i style="background:var(--sk);border:1px solid var(--skb)"></i>자동값 (비우면 자동, 입력하면 덮어씀)</span><span>글자만 있는 값은 자동 계산 결과</span><span style="margin-left:auto">v'+APP_VERSION+' · 자동 저장 (이 브라우저)</span></div>';
  document.getElementById('app').innerHTML=h;
