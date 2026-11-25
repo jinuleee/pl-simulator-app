@@ -140,8 +140,11 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 .bxsave{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 24px 0;padding:10px 14px;border-radius:12px;background:var(--bxacbg);font-size:12.5px}
 .bxsave select.in{width:260px;max-width:100%;height:32px}.bxsave .in.tx{width:180px;height:32px;background:var(--pn);border:1px solid var(--bd2)}
 .bxsave .btn.pri{background:var(--bxac);border-color:var(--bxac)}
-.bxsavenote{color:var(--tx3);font-size:11.5px;margin-left:auto}
-.bxboard{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;padding:16px 24px;background:var(--bg)}
+.bxcur{color:var(--tx2)}.bxcur b{color:var(--tx)}.bxdirty{font-style:normal;color:var(--wn);font-weight:700;margin-left:4px}.bxclean{font-style:normal;color:var(--pos);font-weight:600;margin-left:4px}
+.bxsv{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto}.bxconfirm{font-weight:700;color:var(--tx)}
+.bxboard.c4{gap:10px}.c4 .bxk{padding:12px 12px 10px;border-radius:14px}.c4 .bxbig{font-size:25px}.c4 .bxbig small{font-size:11.5px}.c4 .bxkh{font-size:12.5px}.c4 .bxr{font-size:11.5px}.c4 .bxd,.c4 .bxtag{font-size:10.5px}.c4 .bxl,.c4 .bxinc{font-size:11px}
+.c6 .bxbig{font-size:21px}.c6 .bxr{font-size:11px;flex-direction:column;gap:0}.c6 .bxr b{text-align:left}.c6 .bxkh{flex-direction:column;gap:2px}
+.bxboard{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:14px;padding:16px 24px;background:var(--bg)}
 .bxcap{display:none;grid-column:1/-1;font-size:13px;color:var(--tx2)}.bxcap b{font-size:17px;color:var(--tx);margin-right:6px}
 .bxk{position:relative;background:var(--pn);border:1px solid var(--bd);border-radius:16px;padding:16px 16px 12px;cursor:pointer;text-align:left;font:inherit;color:inherit}
 .bxk:hover{border-color:var(--bd2)}
@@ -177,20 +180,21 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 .bxtw{overflow-x:auto}
 .bxcmp th,.bxcmp td{padding:7px 8px;vertical-align:top}
 .bxcmp thead th{text-align:right;color:var(--tx);font-size:12.5px}
-.bxcmp thead .nmi{text-align:right;font-size:13px;min-width:110px;width:100%}
+.bxcmp thead th{min-width:150px;white-space:normal}.bxcmp thead th:first-child{min-width:0}.bxcmp thead .nmi{display:block;text-align:right;font-size:13px;width:100%}.bxcmp thead .bxtag{display:inline-block;margin-top:3px}
+.bxwrap.wide{grid-template-columns:minmax(0,1fr)}.bxwrap.wide .bxin{max-width:900px}
 .bxcmp th[scope=row]{color:var(--tx2);font-weight:500;font-size:12.5px;text-align:left}
 .bxcmp tr.em th,.bxcmp tr.em td{font-weight:700;color:var(--tx)}
 .bxcc{display:flex;flex-direction:column;align-items:flex-end;line-height:1.35}.bxcc span:first-child{font-weight:600}.bxcc .mut{font-size:11.5px;color:var(--tx3)}
 .bxcmp small.neg,.bxcmp small.pos{font-size:11px;margin-left:3px}
-@media(max-width:1000px){.bxwrap{grid-template-columns:minmax(0,1fr)}.bxsavenote{margin-left:0}}
-@media(max-width:640px){.top .brand{margin-right:6px}.top .brand small{display:none}.tab{padding:0 7px;min-width:38px}.bxseg{display:grid;grid-template-columns:1fr 1fr;width:100%}.bxseg button{border-bottom:1px solid var(--bd)}.bxhd,.bxboard,.bxwrap{padding-left:14px;padding-right:14px}.bxsave,.bxwarn,.bx .pop{margin-left:14px;margin-right:14px}.bxboard{grid-template-columns:minmax(0,1fr)}.bxtitle{flex-basis:100%}}
+@media(max-width:1000px){.bxwrap{grid-template-columns:minmax(0,1fr)}.bxsv{margin-left:0}.bxboard.c4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.top .brand{margin-right:6px}.bxboard,.bxboard.c4{grid-template-columns:minmax(0,1fr)}.bxsave select.in{width:100%}.top .brand small{display:none}.tab{padding:0 7px;min-width:38px}.bxseg{display:grid;grid-template-columns:1fr 1fr;width:100%}.bxseg button{border-bottom:1px solid var(--bd)}.bxhd,.bxboard,.bxwrap{padding-left:14px;padding-right:14px}.bxsave,.bxwarn,.bx .pop{margin-left:14px;margin-right:14px}.bxboard{grid-template-columns:minmax(0,1fr)}.bxtitle{flex-basis:100%}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-/*VERSION*/var APP_VERSION='1.0022.0',APP_UPDATED='2026-11-25 11:05';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
+/*VERSION*/var APP_VERSION='1.0023.0',APP_UPDATED='2026-11-25 11:20';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
 /*ENGINE_START*/
 // 손익 계산 엔진 (화면과 분리. test_engine.js가 이 구간만 꺼내 예시 값과 대조)
 var ROY_BASES=['판매가(VAT포함)','매출(VAT제외)','공급가','원가합계','구성품1원가'];
@@ -685,19 +689,23 @@ function cmpTable2(os,ix){
  if(ix.some(function(i){return os[i].rep})){line('2회차~ 세트당 CM',function(o,i){return fmt(o.cm2)+'원'+dl(o.cm2-b.cm2,i,false)},'em');line('2회차~ CM%',function(o){return pc(o.cmr2,1)})}
  return h+'</tbody></table></div></div>'}
 function betaTab(os){
- var i=bsel(),ix=incl(),mx=0,h,o=os[i];
+ var i=bsel(),ix=incl(),mx=0,h,o=os[i],cx=curItem(),n=os.length,cols=Math.max(n,3);
  os.forEach(function(x){if(x.cm>mx)mx=x.cm});
  h='<div class="bx">'+pops()
   +'<div class="bxhd"><input class="bxtitle" data-p="title" data-t="s" value="'+esc(state.title)+'" placeholder="상품명 입력">'
   +'<div class="bxseg">'+CH_KEYS.map(function(c){return '<button class="'+(state.ch===c?'on':'')+'" data-a="bch" data-c="'+c+'">'+CH_IC[c]+' '+CH_NAME[c]+(BETA_CH[c]?' <span class="bxbeta">베타</span>':'')+'</button>'}).join('')+'</div>'
   +'<span class="bxpill">'+SEL('info.tax',state.info.tax,['과세','면세'],'plain')+SEL('info.temp',state.info.temp,TEMPS,'plain')+'</span></div>'
   +(BETA_CH[state.ch]?'<div class="bxwarn">⚠️ '+CH_NAME[state.ch]+' 채널은 베타입니다. 계산식을 실제 정산과 대조하기 전이라 결과는 참고용으로만 보세요.</div>':'')
-  +'<div class="bxsave">🗂️ <b>보관함</b><select class="in plain" id="ld">'+savedOpts()+'</select><input class="in tx" id="sn" placeholder="저장 이름" value="'+esc(state.title||'')+'"><button class="btn pri" data-a="save">💾 저장</button>'
-  +'<span class="bxsavenote">기존 화면과 같은 데이터입니다. 여기서 고치면 기존 작업대에도 바로 반영됩니다.</span></div>'
-  +'<div class="bxboard" id="capboard"><div class="bxcap nocap-only"><b>'+esc(state.title||'상품명 미입력')+'</b> '+CH_NAME[state.ch]+' / '+today()+'</div>';
+  +'<div class="bxsave" title="기존 화면과 같은 데이터입니다. 여기서 고치면 기존 작업대에도 바로 반영됩니다.">🗂️ <b>보관함</b><select class="in plain" id="ld">'+savedOpts()+'</select>'
+  +(cx?'<span class="bxcur">열린 작업 <b>'+esc(cx.name)+'</b> <span data-bind="dirty">'+dirtyHtml()+'</span></span>':'<span class="bxcur">보관함에서 연 작업이 없습니다</span>')
+  +'<span class="bxsv"><input class="in tx" id="sn" placeholder="저장 이름" value="'+esc(cx?cx.name:(state.title||''))+'">'
+  +(cx?(ui.ovw?'<span class="bxconfirm">"'+esc(cx.name)+'"에 덮어쓸까요?</span><button class="btn pri" data-a="bover2">덮어쓰기</button><button class="btn" data-a="bcancel">취소</button>'
+     :'<button class="btn pri" data-a="bover" title="열린 보관함 항목에 덮어씁니다">💾 저장 (덮어쓰기)</button><button class="btn" data-a="save" title="보관함에 새 항목으로 저장합니다">📄 새로 저장</button>')
+   :'<button class="btn pri" data-a="save">💾 새로 저장</button>')+'</span></div>'
+  +'<div class="bxboard'+(n>=4?' c4':'')+(n>=6?' c6':'')+'" id="capboard" style="--cols:'+cols+'"><div class="bxcap nocap-only"><b>'+esc(state.title||'상품명 미입력')+'</b> '+CH_NAME[state.ch]+' / '+today()+'</div>';
  os.forEach(function(x,k){h+=bCard(k,x,mx)});
- h+='<button class="bxk bxadd nocap" data-a="addsc">➕<b>안 추가</b><span>기준안을 복사해 새 안을 만듭니다</span></button></div>'
-  +'<div class="bxwrap"><div class="bxp bxin"><div class="bxh3">✏️ <span data-bind="nm'+i+'">'+esc(nm(i))+'</span> 입력<span class="bxtabs">'
+ h+='</div>'
+  +'<div class="bxwrap'+(n>=4?' wide':'')+'"><div class="bxp bxin"><div class="bxh3">✏️ <span data-bind="nm'+i+'">'+esc(nm(i))+'</span> 입력<span class="bxtabs">'
   +state.sc.map(function(x,k){return '<button class="'+(k===i?'on':'')+'" data-a="bsel" data-i="'+k+'">'+(k+1)+'안</button>'}).join('')+'</span></div>'
   +'<div class="bxnmrow"><span>안 이름</span><input class="in tx" data-p="sc.'+i+'.name" data-t="s" data-nmph="'+i+'" placeholder="'+esc(nm(i))+'" value="'+esc(state.sc[i].name)+'"></div>'
   +card(i,o,os.length>1,true)
@@ -758,7 +766,8 @@ function render(keep){
 function updateBinds(){
  document.querySelectorAll('input[data-nmph]').forEach(function(el){el.placeholder=nm(+el.dataset.nmph)});
  document.querySelectorAll('[data-bind]').forEach(function(el){var b=el.dataset.bind;
-  if(b==='title')el.textContent=state.title||'상품명 미입력';
+  if(b==='dirty')el.innerHTML=dirtyHtml();
+  else if(b==='title')el.textContent=state.title||'상품명 미입력';
   else if(b.indexOf('nm')===0){var i=+b.slice(2);if(state.sc[i])el.textContent=nm(i)}
   else if(b.indexOf('cc')===0){var m=b.slice(2).split('_'),xx=state.sc[+m[0]],cc=xx&&xx.comps[+m[1]];if(cc)el.textContent=cc.n||('구성품 '+(+m[1]+1))}})}
 
@@ -797,7 +806,7 @@ app.addEventListener('change',function(e){var el=e.target;
  if(el.id==='imp'){doImport(el);return}
  if(el.id==='vsel'){ui.vi=+el.value;render();return}
  if(el.id==='cpick'){if(el.value){var pp=el.value.split(':');copyFromSaved(+pp[0],+pp[1])}render();return}
- if(el.id==='ld'){if(el.value!==''){var x=state.saved[+el.value];applySnap(x.data);ui.msg='불러왔습니다: '+esc(x.name)}render();return}
+ if(el.id==='ld'){if(el.value!==''){var x=state.saved[+el.value];openSaved(x);ui.msg='불러왔습니다: '+esc(x.name)}render();return}
  if(el.dataset&&el.dataset.p&&(el.tagName==='SELECT'||el.type==='checkbox')){setPath(state,el.dataset.p,readVal(el));render()}});
 
 // 캡처용 복제본 보정: 접힌 섹션 내용 제거, 입력칸을 글자로 바꿔 세로 정렬이 깨지지 않게 함
@@ -834,13 +843,23 @@ function capture(id,name){
    try{navigator.clipboard.write([new ClipboardItem({'image/png':b})]).catch(function(){})}catch(x){}
    ui.msg='이미지로 저장했습니다: '+esc(a.download);render()})}).catch(function(err){ui.msg='캡처 실패: '+esc(err&&err.message||err);render()})}
 
+
+// ---------- 보관함: 지금 열린 작업 (state.cur = 보관함 항목 id) 과 변경 여부 ----------
+function newId(){return 's'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function hsh(t){var h=0,i;for(i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return h}
+function markClean(){state.curH=hsh(JSON.stringify(snapshot()))}
+function isDirty(){return state.curH!==hsh(JSON.stringify(snapshot()))}
+function curItem(){if(!state.cur)return null;for(var k=0;k<state.saved.length;k++)if(state.saved[k].id===state.cur)return state.saved[k];return null}
+function nowTs(){var d=new Date();return today()+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)}
+function openSaved(x){if(!x.id)x.id=newId();applySnap(x.data);state.cur=x.id;markClean()}
+function dirtyHtml(){var cx=curItem();if(!cx)return '';return isDirty()?'<i class="bxdirty">● 수정됨 (저장 안 됨)</i>':'<i class="bxclean">저장됨</i>'}
 function snapshot(){return clone({cmt:state.cmt||'',ch:state.ch,title:state.title,memo:state.memo,base:state.base,info:state.info,sc:state.sc})}
 function applySnap(d){state.cmt=d.cmt||'';state.ch=d.ch==='미리주문'?'B2C':d.ch;state.title=d.title;state.memo=d.memo||'';state.base=d.base||0;var ad=adopt({base:state.base,sc:d.sc,info:d.info});state.info=ad.info;state.sc=ad.sc;if(ui.tab!=='beta')ui.tab='work';ui.kakao='';ui.msg='';ui.bsel=state.base}
 
 app.addEventListener('click',function(e){
  var b=e.target.closest('[data-a]');if(!b)return;
  var a=b.dataset.a,i=+b.dataset.i,j=+b.dataset.j;
- ui.msg='';
+ ui.msg='';if(a!=='bover')ui.ovw=0;
  if(a==='tab'){ui.tab=b.dataset.t;ui.kakao=''}
  else if(a==='addsc'){var cb=clone(state.sc[state.base]);cb.name='';cb.exc=0;state.sc.push(cb);ui.bsel=state.sc.length-1}
  else if(a==='bsel'){if(e.target.closest('input,select,button:not([data-a=bsel]),label'))return;if(ui.bsel===i)return;ui.bsel=i}
@@ -860,12 +879,16 @@ app.addEventListener('click',function(e){
    if(!lg||lg.text!==cm){state.cmtlog.push({ts:new Date().toISOString(),title:state.title,ch:state.ch,n:incl().length,text:cm});if(state.cmtlog.length>300)state.cmtlog.shift()}}
   ui.msg=ok?'복사했습니다.':'복사하지 못했습니다. 글자를 직접 선택해 복사해 주세요.'}
  else if(a==='cap'){capture(b.dataset.id,b.dataset.n);return}
- else if(a==='save'){var nmv=document.getElementById('sn').value.trim();if(!nmv){ui.msg='저장 이름을 입력해 주세요.'}else{state.saved.unshift({name:nmv,ts:today(),data:snapshot()});ui.msg='저장했습니다: '+esc(nmv)}}
- else if(a==='load'){applySnap(state.saved[i].data);ui.msg='불러왔습니다: '+esc(state.saved[i].name)}
- else if(a==='delsaved'){state.saved.splice(i,1)}
+ else if(a==='save'){var nmv=document.getElementById('sn').value.trim();if(!nmv){ui.msg='저장 이름을 입력해 주세요.'}else{var nid=newId();state.saved.unshift({id:nid,name:nmv,ts:nowTs(),data:snapshot()});state.cur=nid;markClean();ui.msg='저장했습니다: '+esc(nmv)}}
+ else if(a==='bover'){ui.ovw=1}
+ else if(a==='bcancel'){ui.ovw=0}
+ else if(a==='bover2'){var cx=curItem(),on=(document.getElementById('sn')||{}).value;ui.ovw=0;
+  if(cx){on=(on||'').trim();if(on)cx.name=on;cx.data=snapshot();cx.ts=nowTs();markClean();ui.msg='덮어써서 저장했습니다: '+esc(cx.name)}else ui.msg='열린 보관함 항목이 없습니다. 새로 저장해 주세요.'}
+ else if(a==='load'){openSaved(state.saved[i]);ui.msg='불러왔습니다: '+esc(state.saved[i].name)}
+ else if(a==='delsaved'){if(state.saved[i]&&state.saved[i].id&&state.saved[i].id===state.cur)state.cur=null;state.saved.splice(i,1)}
  else if(a==='export'){var bl=new Blob([JSON.stringify(state)],{type:'application/json'}),l=document.createElement('a');l.href=URL.createObjectURL(bl);l.download='손익시뮬레이터_백업_'+today()+'.json';l.click();ui.msg='내보냈습니다.'}
  else if(a==='import'){document.getElementById('imp').click();return}
- else if(a==='blank'){state.sc=[newSc()];state.info=newInfo();state.base=0;state.ch='방송';state.title='';state.memo='';if(ui.tab!=='beta')ui.tab='work';ui.bsel=0}
+ else if(a==='blank'){state.sc=[newSc()];state.info=newInfo();state.base=0;state.ch='방송';state.title='';state.memo='';if(ui.tab!=='beta')ui.tab='work';ui.bsel=0;state.cur=null}
  else if(a==='addv'){var vs=state.ST.vendors,cv=clone(vs[Math.min(ui.vi||0,vs.length-1)]);cv.id='v'+Date.now();cv.name=cv.name+' 복사';vs.push(cv);ui.vi=vs.length-1}
  else if(a==='delv'){var vl=state.ST.vendors;if(vl.length>1){vl.splice(ui.vi||0,1);ui.vi=0}}
  else if(a==='ghpush'){ghPush(false);return}
