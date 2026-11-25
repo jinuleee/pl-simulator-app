@@ -200,7 +200,7 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 <div id="app"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-/*VERSION*/var APP_VERSION='1.0024.0',APP_UPDATED='2026-11-25 11:29';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
+/*VERSION*/var APP_VERSION='1.0024.1',APP_UPDATED='2026-11-25 12:53';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
 /*ENGINE_START*/
 // 손익 계산 엔진 (화면과 분리. test_engine.js가 이 구간만 꺼내 예시 값과 대조)
 var ROY_BASES=['판매가(VAT포함)','매출(VAT제외)','공급가','원가합계','구성품1원가'];
@@ -783,8 +783,8 @@ function render(keep){
  var os=compute(),w=ui.tab==='work',bt=ui.tab==='beta';
  var tabs=[['work','작업대'],['box','보관함'],['set','설정'],['beta','베타']];
  var h='<div class="top"><div class="brand"><b>P&amp;L Simulator</b><small id="ver">v'+APP_VERSION+' · 업데이트 '+APP_UPDATED+'</small></div><nav class="tabs">'+tabs.map(function(t){return '<button class="tab'+(ui.tab===t[0]?' on':'')+(t[0]==='beta'?' tbeta':'')+'" data-a="tab" data-t="'+t[0]+'" title="'+(t[0]==='beta'?'베타 (새 화면)':t[1])+'">'+svgI(t[0])+'<span>'+t[1]+'</span>'+(t[0]==='beta'?'<small>NEW</small>':'')+'</button>'}).join('')+'</nav>'
-  +(bt?'<span class="sp">'+ib('addsc','add','안 추가')+ib('cap','cam','결과 캡처',' data-id="capboard" data-n="결과비교"')+ib('cap','table','구성비교',' data-id="capcmp" data-n="구성가격비교"')+ib('kakao','msg','카톡 요약')+'</span>':'')
-  +(w?'<span class="sp">'+ib('addsc','add','안 추가')+ib('cap','cam','표 캡처',' data-id="capcards" data-n="시뮬레이션표"')+ib('cap','table','구성비교',' data-id="capcmp" data-n="구성가격비교"')+ib('kakao','msg','카톡 요약')+'</span>':'')+'</div>';
+  +(bt?'<span class="sp">'+ib('addsc','add','안 추가')+ib('cap','cam','표 캡처',' data-id="capboard" data-n="결과비교"')+ib('cap','table','비교 캡처',' data-id="capcmp" data-n="구성가격비교"')+ib('kakao','msg','카톡 요약')+'</span>':'')
+  +(w?'<span class="sp">'+ib('addsc','add','안 추가')+ib('cap','cam','표 캡처',' data-id="capcards" data-n="시뮬레이션표"')+ib('cap','table','비교 캡처',' data-id="capcmp" data-n="구성가격비교"')+ib('kakao','msg','카톡 요약')+'</span>':'')+'</div>';
  h+=w?work(os):bt?betaTab(os):ui.tab==='box'?boxTab():setTab();
  h+='<div class="lg"><span><i style="background:var(--y);border:1px solid var(--yb)"></i>직접 입력 ("예: ..."는 입력 안내)</span><span><i style="background:var(--sk);border:1px solid var(--skb)"></i>자동값 (비우면 자동, 입력하면 덮어씀)</span><span>글자만 있는 값은 자동 계산 결과</span><span style="margin-left:auto">v'+APP_VERSION+' · 자동 저장 (이 브라우저)</span></div>';
  document.getElementById('app').innerHTML=h;
