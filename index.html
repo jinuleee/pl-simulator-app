@@ -195,13 +195,28 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 .bxcmp small.neg,.bxcmp small.pos{font-size:11px;margin-left:3px}
 @media(max-width:1000px){.bxwrap{grid-template-columns:minmax(0,1fr)}.bxsv{margin-left:0}.bxboard.c4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.top .brand{margin-right:6px}.bxboard,.bxboard.c4{grid-template-columns:minmax(0,1fr)}.bxsave select.in{width:100%}.top .brand{display:none}.top nav.tabs{width:100%;display:flex;justify-content:space-between;padding:6px 0 4px}.tab{padding:0 8px;font-size:13px;gap:4px;flex:1}.tab.tbeta small{display:none}.ib{padding:0 8px;font-size:12px;gap:4px}.top .sp{gap:5px;flex-wrap:nowrap;overflow-x:auto;justify-content:space-between}.bxseg{display:grid;grid-template-columns:1fr 1fr;width:100%}.bxseg button{border-bottom:1px solid var(--bd)}.bxhd,.bxboard,.bxwrap{padding-left:14px;padding-right:14px}.bxsave,.bxwarn,.bx .pop{margin-left:14px;margin-right:14px}.bxboard{grid-template-columns:minmax(0,1fr)}.bxtitle{flex-basis:100%}}
+
+.chp{position:relative;display:inline-block}
+.chbtn{display:inline-flex;align-items:center;gap:8px;min-width:150px;height:34px;padding:0 10px;border:1px solid var(--bd2);border-radius:9px;background:var(--pn);color:var(--tx);font-weight:600;justify-content:space-between}
+.chbtn .chn{font-size:12.5px}.chbtn:hover{border-color:var(--tx3)}.chbtn .ph{color:var(--tx3);font-weight:500}.chbtn i{font-style:normal;color:var(--tx3);font-size:11px}
+.chlg{height:20px;width:auto;display:block}.chlg.sm{height:16px;display:inline-block;vertical-align:-3px}
+.chbg{position:fixed;inset:0;background:rgba(0,0,0,.28);z-index:40}
+.chph{display:flex;justify-content:space-between;align-items:center;margin:0 2px 10px}.chx{border:0;background:none;font-size:15px;color:var(--tx3);padding:2px 6px}
+.chpop{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:41;width:520px;max-width:calc(100vw - 24px);max-height:86vh;overflow:auto;background:var(--pn);border:1px solid var(--bd2);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.14);padding:10px}
+.chgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}@media(max-width:640px){.chgrid{grid-template-columns:1fr 1fr}}
+.chopt{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;height:64px;border:1px solid var(--bd);border-radius:10px;background:#fff;padding:6px}
+.chopt:hover{border-color:var(--ac)}.chopt.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+.chopt .chlg{height:20px;max-width:100%;object-fit:contain}.chopt small{font-size:10.5px;color:#666}
+.choth{display:flex;flex-direction:column;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid var(--bd);font-size:11.5px;color:var(--tx3)}.choth .in.tx{width:100%;text-align:left}
+@media(prefers-color-scheme:dark){.chbtn.lg{background:#fff;color:#111}}
+.tt2{display:inline-flex;gap:6px}select.in.sm{width:84px}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-/*VERSION*/var APP_VERSION='1.0024.3',APP_UPDATED='2026-11-27 09:06';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
+/*VERSION*/var APP_VERSION='1.0025.0',APP_UPDATED='2026-11-27 09:27';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
 /*ENGINE_START*/
 // 손익 계산 엔진 (화면과 분리. test_engine.js가 이 구간만 꺼내 예시 값과 대조)
 var ROY_BASES=['판매가(VAT포함)','매출(VAT제외)','공급가','원가합계','구성품1원가'];
@@ -501,6 +516,21 @@ function compute(){
 
 // ---------- 작업대: 오른쪽 카드 ----------
 var COMM={'방송':'채널 수수료율','B2C':'마켓 수수료율','직매입':'채널 마진율 (판매가 대비)','공구':'채널 수수료율'};
+
+// ---------- 방송 채널 목록 (로고). 공개본은 build_pub.py가 이 구간을 가상 채널로 바꿈 ----------
+/*CHLOGO_START*/var CHLOGOS=[{k:'c0',n:'채널 가',al:[],src:''},{k:'c1',n:'채널 나',al:[],src:''},{k:'c2',n:'채널 다',al:[],src:''},{k:'c3',n:'채널 라',al:[],src:''},{k:'c4',n:'채널 마',al:[],src:''},{k:'c5',n:'채널 바',al:[],src:''}];/*CHLOGO_END*/
+function chNorm(t){return String(t||'').replace(/\s+/g,'').toUpperCase()}
+function chFind(name){var t=chNorm(name);if(!t)return null;for(var k=0;k<CHLOGOS.length;k++){var c=CHLOGOS[k];if(chNorm(c.n)===t)return c;for(var j=0;j<c.al.length;j++)if(chNorm(c.al[j])===t)return c}return null}
+function chLogo(c,cls){return c&&c.src?'<img class="'+(cls||'chlg')+'" src="'+c.src+'" alt="'+esc(c.n)+'">':''}
+function chPick(i,s,P){
+ var c=chFind(s.chname),open=ui.chpick===i;
+ var h='<div class="chp"><button class="chbtn'+(c&&c.src?' lg':'')+'" data-a="chopen" data-i="'+i+'" title="방송 채널 선택">'
+  +(c?chLogo(c)+'<span class="chn">'+esc(c.n)+'</span>':'<span class="'+(s.chname?'':'ph')+'">'+(s.chname?esc(s.chname):'채널 선택')+'</span>')
+  +'<i class="nocap">▾</i></button>';
+ if(open){h+='<div class="chbg nocap"></div><div class="chpop nocap" role="dialog" aria-label="방송 채널 선택"><div class="chph"><b>방송 채널 선택</b><button class="chx" data-a="chopen" data-i="'+i+'" title="닫기">✕</button></div><div class="chgrid">';
+  CHLOGOS.forEach(function(x){h+='<button class="chopt'+(c===x?' on':'')+'" data-a="chset" data-i="'+i+'" data-c="'+esc(x.n)+'">'+(x.src?chLogo(x):'')+'<small>'+esc(x.n)+'</small></button>'});
+  h+='</div><div class="choth"><span>목록에 없는 채널은 직접 입력</span>'+TX(P+'chname',s.chname,'예: 채널명')+'</div></div>'}
+ return h+'</div>'}
 var CHPH={'방송':'예: 채널 가','B2C':'예: 네이버 스마트스토어','직매입':'예: 대형마트 A','공구':'예: 공동구매 채널'};
 function kpi(l,cm,r){var c=cm<0?' neg':'';return '<div class="kpi"><div><div class="kl">'+l+'</div><div class="kv'+c+'">'+fmt(cm)+'<small>원</small></div></div><div><div class="kl">CM%</div><div class="kv'+c+'">'+pc(r,1)+'</div></div></div>'}
 function card(i,o,multi,bodyOnly){
@@ -513,9 +543,9 @@ function card(i,o,multi,bodyOnly){
   +'<div class="ks">'+(isb?'':chip)+'<span>100g당 '+(o.p100>0?fmt(o.p100)+'원':'내용량 입력 필요')+'</span>'+(o.once?'<span>1회 총 CM '+fmt(o.tcm)+'원</span>':'')+(bc&&o.bepo>0?'<span>BEP 주문 '+fmt(o.bepo)+'개</span>':'')+'</div>';
  if(bodyOnly)h='';
  // 1) 상품 정보·판매 (이 표만의 값)
- b=(bodyOnly?row('과세 구분 <small class="cmn">모든 안 공통</small>',SEL('info.tax',state.info.tax,['과세','면세']))+row('품온 <small class="cmn">모든 안 공통</small>',SEL('info.temp',state.info.temp,TEMPS)):'')
+ b=(bodyOnly?row('과세 · 품온 <small class="cmn">모든 안 공통</small>','<span class="tt2">'+SEL('info.tax',state.info.tax,['과세','면세'],'y sm')+SEL('info.temp',state.info.temp,TEMPS,'y sm')+'</span>'):'')
   +(bc?row('방송 형태',SEL(P+'btype',s.btype,BTYPES)):'')
-  +row('채널명',TX(P+'chname',s.chname,CHPH[ch]))
+  +(bc?row('채널',chPick(i,s,P)):row('채널명',TX(P+'chname',s.chname,CHPH[ch])))
   +row('판매가 (VAT 포함)',N(P+'price',s.price,'n','원','예: 59,900'))
   +row(COMM[ch],N(P+'commrate',s.commrate,'p','%',dm?'예: 42':'예: 36'))
   +((bc||dm)?row(bc?'목표 수량 (1회)':'발주 수량 (1회)',N(P+'target',s.target,'n','개','예: 2,000')):'')
@@ -699,7 +729,7 @@ function cmpTable2(os,ix){
  h+='</tr></thead><tbody>';
  function dl(d,i,cost){if(i===state.base)return '';var r=Math.round(d);if(!r)return '';return ' <small class="'+((cost?d>0:d<0)?'neg':'pos')+'">'+sgn(d)+'</small>'}
  function line(label,fn,cls){h+='<tr'+(cls?' class="'+cls+'"':'')+'><th scope="row">'+label+'</th>';ix.forEach(function(i){h+='<td>'+fn(os[i],i)+'</td>'});h+='</tr>'}
- line('채널'+(bc?' / 방송 형태':''),function(o,i){return esc(es[i].chname||'-')+(bc?' · '+esc(es[i].btype):'')});
+ line('채널'+(bc?' / 방송 형태':''),function(o,i){var c=bc&&chFind(es[i].chname);return (c&&c.src?chLogo(c,'chlg sm')+' ':esc(es[i].chname||'-'))+(bc?' · '+esc(es[i].btype):'')});
  line('판매가 (VAT 포함)',function(o){return fmt(o.price)+'원'});
  if(ix.some(function(i){return os[i].coupon>0}))line('쿠폰·ARS 할인',function(o){return o.coupon>0?'-'+fmt(o.coupon)+'원':'-'});
  line('최종 판매가',function(o){return fmt(o.final)+'원'},'em');
@@ -891,10 +921,14 @@ function snapshot(){return clone({cmt:state.cmt||'',ch:state.ch,title:state.titl
 function applySnap(d){state.cmt=d.cmt||'';state.ch=d.ch==='미리주문'?'B2C':d.ch;state.title=d.title;state.memo=d.memo||'';state.base=d.base||0;var ad=adopt({base:state.base,sc:d.sc,info:d.info});state.info=ad.info;state.sc=ad.sc;if(ui.tab!=='beta')ui.tab='work';ui.kakao='';ui.msg='';ui.bsel=state.base}
 
 app.addEventListener('click',function(e){
- var b=e.target.closest('[data-a]');if(!b)return;
+ var b=e.target.closest('[data-a]');
+ if(ui.chpick!=null&&!e.target.closest('.chpop,[data-a=chopen]')){ui.chpick=null;if(!b){render();return}}
+ if(!b)return;
  var a=b.dataset.a,i=+b.dataset.i,j=+b.dataset.j;
  ui.msg='';if(a!=='bover')ui.ovw=0;
- if(a==='tab'){ui.tab=b.dataset.t;ui.kakao=''}
+ if(a==='chopen'){ui.chpick=ui.chpick===i?null:i}
+ else if(a==='chset'){state.sc[i].chname=b.dataset.c;ui.chpick=null}
+ else if(a==='tab'){ui.tab=b.dataset.t;ui.kakao='';ui.chpick=null}
  else if(a==='addsc'){var cb=clone(state.sc[state.base]);cb.name='';cb.exc=0;state.sc.push(cb);ui.bsel=state.sc.length-1}
  else if(a==='bsel'){if(e.target.closest('input,select,button:not([data-a=bsel]),label'))return;if(ui.bsel===i)return;ui.bsel=i}
  else if(a==='bch'){state.ch=b.dataset.c}
