@@ -150,7 +150,7 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 .c6 .bxbig{font-size:21px}.c6 .bxr{font-size:11px;flex-direction:column;gap:0}.c6 .bxr b{text-align:left}.c6 .bxkh{flex-direction:column;gap:2px}
 .bxboard{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:14px;padding:16px 24px;background:var(--bg)}
 .bxsum{background:var(--pn2);border:1px dashed var(--bd2);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0}
-.bxsumh{font-weight:700;font-size:13.5px;margin-bottom:2px}.bxsumr{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--tx2)}.bxsumr b{color:var(--tx);text-align:right}.bxsumr b.pos{color:var(--pos)}.bxsumr b.neg{color:var(--neg)}.bxsumd{font-size:12px;color:var(--tx3);margin:-2px 0 4px}
+.bxsumh{font-weight:700;font-size:13.5px;margin-bottom:2px}.bxsumr{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--tx2)}.bxsumr b{color:var(--tx);text-align:right}.bxsumr b.pos{color:var(--pos)}.bxsumr b.neg{color:var(--neg)}.bxsumt{font-size:12.5px;color:var(--tx2);margin-bottom:4px}.bx small.cmn{font-size:10.5px;color:var(--tx3);font-weight:500;margin-left:4px}.bxsumd{font-size:12px;color:var(--tx3);margin:-2px 0 4px}
 .bxcap{display:none;grid-column:1/-1;font-size:13px;color:var(--tx2)}.bxcap b{font-size:17px;color:var(--tx);margin-right:6px}
 .bxk{position:relative;background:var(--pn);border:1px solid var(--bd);border-radius:16px;padding:16px 16px 12px;cursor:pointer;text-align:left;font:inherit;color:inherit}
 .bxk:hover{border-color:var(--bd2)}
@@ -201,7 +201,7 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 <div id="app"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-/*VERSION*/var APP_VERSION='1.0024.2',APP_UPDATED='2026-11-27 09:00';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
+/*VERSION*/var APP_VERSION='1.0024.3',APP_UPDATED='2026-11-27 09:06';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
 /*ENGINE_START*/
 // 손익 계산 엔진 (화면과 분리. test_engine.js가 이 구간만 꺼내 예시 값과 대조)
 var ROY_BASES=['판매가(VAT포함)','매출(VAT제외)','공급가','원가합계','구성품1원가'];
@@ -513,7 +513,8 @@ function card(i,o,multi,bodyOnly){
   +'<div class="ks">'+(isb?'':chip)+'<span>100g당 '+(o.p100>0?fmt(o.p100)+'원':'내용량 입력 필요')+'</span>'+(o.once?'<span>1회 총 CM '+fmt(o.tcm)+'원</span>':'')+(bc&&o.bepo>0?'<span>BEP 주문 '+fmt(o.bepo)+'개</span>':'')+'</div>';
  if(bodyOnly)h='';
  // 1) 상품 정보·판매 (이 표만의 값)
- b=(bc?row('방송 형태',SEL(P+'btype',s.btype,BTYPES)):'')
+ b=(bodyOnly?row('과세 구분 <small class="cmn">모든 안 공통</small>',SEL('info.tax',state.info.tax,['과세','면세']))+row('품온 <small class="cmn">모든 안 공통</small>',SEL('info.temp',state.info.temp,TEMPS)):'')
+  +(bc?row('방송 형태',SEL(P+'btype',s.btype,BTYPES)):'')
   +row('채널명',TX(P+'chname',s.chname,CHPH[ch]))
   +row('판매가 (VAT 포함)',N(P+'price',s.price,'n','원','예: 59,900'))
   +row(COMM[ch],N(P+'commrate',s.commrate,'p','%',dm?'예: 42':'예: 36'))
@@ -682,7 +683,7 @@ function bCard(i,o,mx){
 function bSum(os,span){
  var best=0,b=os[state.base],h='<div class="bxsum nocap" style="grid-column:span '+span+'"><div class="bxsumh">🔎 비교 요약</div>';
  os.forEach(function(o,k){if(o.cm>os[best].cm)best=k});
- if(os.length<2)return h+'<div class="bxsumr">안이 하나뿐입니다. 상단 <b>안 추가</b>로 기준안을 복사한 뒤 판매가·구성·원가를 바꿔 비교해 보세요.</div>'
+ if(os.length<2)return h+'<div class="bxsumt">안이 하나뿐입니다. 상단 <b>안 추가</b>로 기준안을 복사한 뒤 판매가·구성·원가를 바꿔 비교해 보세요.</div>'
   +'<div class="bxsumr"><span>100g당 판매가</span><b>'+(b.p100>0?fmt(b.p100)+'원':'내용량 입력 필요')+'</b></div>'
   +(state.ch==='방송'?'<div class="bxsumr"><span>손익분기 주문 수 (BEP)</span><b>'+(b.bepo>0?fmt(b.bepo)+'개':'-')+'</b></div>':'')+'</div>';
  h+='<div class="bxsumr"><span>세트당 CM이 가장 높은 안</span><b>'+esc(nm(best))+' · '+fmt(os[best].cm)+'원</b></div>';
@@ -726,7 +727,7 @@ function betaTab(os){
  h='<div class="bx">'+pops()
   +'<div class="bxhd"><input class="bxtitle" data-p="title" data-t="s" value="'+esc(state.title)+'" placeholder="상품명 입력">'
   +'<div class="bxseg">'+CH_KEYS.map(function(c){return '<button class="'+(state.ch===c?'on':'')+'" data-a="bch" data-c="'+c+'">'+CH_IC[c]+' '+CH_NAME[c]+(BETA_CH[c]?' <span class="bxbeta">베타</span>':'')+'</button>'}).join('')+'</div>'
-  +'<span class="bxpill">'+SEL('info.tax',state.info.tax,['과세','면세'],'plain')+SEL('info.temp',state.info.temp,TEMPS,'plain')+'</span></div>'
+  +'</div>'
   +(BETA_CH[state.ch]?'<div class="bxwarn">⚠️ '+CH_NAME[state.ch]+' 채널은 베타입니다. 계산식을 실제 정산과 대조하기 전이라 결과는 참고용으로만 보세요.</div>':'')
   +'<div class="bxsave" title="기존 화면과 같은 데이터입니다. 여기서 고치면 기존 작업대에도 바로 반영됩니다.">🗂️ <b>보관함</b><select class="in plain" id="ld">'+savedOpts()+'</select>'
   +(cx?'<span class="bxcur">열린 작업 <b>'+esc(cx.name)+'</b> <span data-bind="dirty">'+dirtyHtml()+'</span></span>':'<span class="bxcur">보관함에서 연 작업이 없습니다</span>')
