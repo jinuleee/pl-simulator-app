@@ -148,7 +148,7 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 .bxsv{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto}.bxconfirm{font-weight:700;color:var(--tx)}
 .bxboard.c4{gap:10px}.c4 .bxk{padding:12px 12px 10px;border-radius:14px}.c4 .bxbig{font-size:25px}.c4 .bxbig small{font-size:11.5px}.c4 .bxkh{font-size:12.5px}.c4 .bxr{font-size:11.5px}.c4 .bxd,.c4 .bxtag{font-size:10.5px}.c4 .bxl,.c4 .bxinc{font-size:11px}
 .c6 .bxbig{font-size:21px}.c6 .bxr{font-size:11px;flex-direction:column;gap:0}.c6 .bxr b{text-align:left}.c6 .bxkh{flex-direction:column;gap:2px}
-.bxboard{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:14px;padding:16px 24px;background:var(--bg)}
+.bxboard{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:14px;padding:16px 24px;background:var(--bg);max-width:var(--W,none);margin:0 auto}
 .bxsum{background:var(--pn2);border:1px dashed var(--bd2);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0}
 .bxsumh{font-weight:700;font-size:13.5px;margin-bottom:2px}.bxsumr{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--tx2)}.bxsumr b{color:var(--tx);text-align:right}.bxsumr b.pos{color:var(--pos)}.bxsumr b.neg{color:var(--neg)}.bxsumt{font-size:12.5px;color:var(--tx2);margin-bottom:4px}.bx small.cmn{font-size:10.5px;color:var(--tx3);font-weight:500;margin-left:4px}.bxsumd{font-size:12px;color:var(--tx3);margin:-2px 0 4px}
 .bxcap{display:none;grid-column:1/-1;font-size:13px;color:var(--tx2)}.bxcap b{font-size:17px;color:var(--tx);margin-right:6px}
@@ -168,7 +168,7 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 .bxinc{display:flex;align-items:center;gap:3px;font-size:11.5px;color:var(--tx2);margin-right:auto;cursor:pointer}
 .bxadd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-style:dashed;color:var(--tx2);min-height:160px;font-size:22px}
 .bxadd b{font-size:14px}.bxadd span{font-size:11.5px;color:var(--tx3)}
-.bxwrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;padding:0 24px;align-items:start}
+.bxwrap{display:grid;grid-template-columns:520px minmax(0,var(--tw,1fr));justify-content:center;gap:16px;padding:0 24px;align-items:start}
 .bxp{background:var(--pn);border:1px solid var(--bd);border-radius:16px;padding:16px 18px}
 .bxh3{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;margin-bottom:10px;flex-wrap:wrap}.bxh3 small{font-weight:400;font-size:11.5px;color:var(--tx3)}
 .bxtabs{margin-left:auto;display:inline-flex;border:1px solid var(--bd2);border-radius:9px;overflow:hidden}
@@ -186,9 +186,9 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 .bxtw{overflow-x:auto}
 .bxcmp th,.bxcmp td{padding:7px 8px;vertical-align:top}
 .bxcmp thead th{text-align:right;color:var(--tx);font-size:12.5px}
-.bxcmp thead th{min-width:150px;white-space:normal}.bxcmp thead th:first-child{min-width:0}.bxcmp thead .nmi{display:block;text-align:right;font-size:13px;width:100%}.bxcmp thead .bxtag{display:inline-block;margin-top:3px}
+.bxcmp thead th{min-width:150px;white-space:normal}.bxcmp thead th:first-child{min-width:0}.bxcmp thead .nmi{display:block;text-align:right;font-size:13px;width:100%}.bxcmp thead .bxhn{display:block;font-weight:700;font-size:13px;line-height:1.35;word-break:keep-all;overflow-wrap:anywhere}.bxcmp thead .bxtag{display:inline-block;margin-top:3px}
 .bxwrap.wide{grid-template-columns:minmax(0,1fr)}.bxwrap.wide .bxin{max-width:none}
-@media(min-width:1600px){.bxwrap,.bxwrap.wide{grid-template-columns:minmax(460px,.8fr) minmax(0,1.2fr)}}
+@media(min-width:1600px){.bxwrap.wide{grid-template-columns:520px minmax(0,var(--tw,1fr))}}
 .bxcmp th[scope=row]{color:var(--tx2);font-weight:500;font-size:12.5px;text-align:left}
 .bxcmp tr.em th,.bxcmp tr.em td{font-weight:700;color:var(--tx)}
 .bxcc{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:baseline;column-gap:6px;row-gap:1px;line-height:1.4}.bxcc>span{white-space:nowrap}.bxcc .cn{font-weight:600;white-space:normal;text-align:right}.bxcc .mut{font-size:11.5px;color:var(--tx3)}
@@ -216,7 +216,7 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 <div id="app"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-/*VERSION*/var APP_VERSION='1.0025.3',APP_UPDATED='2026-11-27 12:42';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
+/*VERSION*/var APP_VERSION='1.0026.0',APP_UPDATED='2026-11-27 14:22';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
 /*ENGINE_START*/
 // 손익 계산 엔진 (화면과 분리. test_engine.js가 이 구간만 꺼내 예시 값과 대조)
 var ROY_BASES=['판매가(VAT포함)','매출(VAT제외)','공급가','원가합계','구성품1원가'];
@@ -744,7 +744,7 @@ function cmpTable2(os,ix){
  var b=os[state.base],bc=state.ch==='방송',dm=state.ch==='직매입',es=state.sc.map(eff),mx=0,
  h='<div class="bxp" id="capcmp"><div class="bxh3">📊 구성 가격 비교 <small>'+esc(state.title||'')+'</small></div><div class="bxtw"><table class="bxcmp"><thead><tr><th></th>';
  ix.forEach(function(i){mx=Math.max(mx,es[i].comps.length)});
- ix.forEach(function(i){h+='<th><input class="nmi" data-p="sc.'+i+'.name" data-t="s" data-nmph="'+i+'" placeholder="'+esc(nm(i))+'" value="'+esc(state.sc[i].name)+'">'+(i===state.base?'<span class="bxtag">기준</span>':'')+'</th>'});
+ ix.forEach(function(i){h+='<th><span class="bxhn" data-bind="nm'+i+'">'+esc(nm(i))+'</span>'+(i===state.base?'<span class="bxtag">기준</span>':'')+'</th>'});   // 안 이름은 줄바꿈되는 글자 (수정은 입력 칸의 '안 이름')
  h+='</tr></thead><tbody>';
  function dl(d,i,cost){if(i===state.base)return '';var r=Math.round(d);if(!r)return '';return ' <small class="'+((cost?d>0:d<0)?'neg':'pos')+'">'+sgn(d)+'</small>'}
  function line(label,fn,cls){h+='<tr'+(cls?' class="'+cls+'"':'')+'><th scope="row">'+label+'</th>';ix.forEach(function(i){h+='<td>'+fn(os[i],i)+'</td>'});h+='</tr>'}
@@ -771,7 +771,8 @@ function cmpTable2(os,ix){
  if(ix.some(function(i){return os[i].rep})){line('2회차~ 세트당 CM',function(o,i){return fmt(o.cm2)+'원'+dl(o.cm2-b.cm2,i,false)},'em');line('2회차~ CM%',function(o){return pc(o.cmr2,1)})}
  return h+'</tbody></table></div></div>'}
 function betaTab(os){
- var i=bsel(),ix=incl(),mx=0,h,o=os[i],cx=curItem(),n=os.length,cols=Math.max(n,3);
+ var i=bsel(),ix=incl(),mx=0,h,o=os[i],cx=curItem(),n=os.length,cols=Math.max(n,3),
+  tw=330+ix.length*270,W=520+16+tw+48;   // 구성표 폭은 비교에 포함된 안 수만큼, 결과 카드 줄도 같은 폭
  os.forEach(function(x){if(x.cm>mx)mx=x.cm});
  h='<div class="bx">'+pops()
   +'<div class="bxhd"><input class="bxtitle" data-p="title" data-t="s" value="'+esc(state.title)+'" placeholder="상품명 입력">'
@@ -784,11 +785,11 @@ function betaTab(os){
   +(cx?(ui.ovw?'<span class="bxconfirm">"'+esc(cx.name)+'"에 덮어쓸까요?</span><button class="btn pri" data-a="bover2">덮어쓰기</button><button class="btn" data-a="bcancel">취소</button>'
      :'<button class="btn pri" data-a="bover" title="열린 보관함 항목에 덮어씁니다">💾 저장 (덮어쓰기)</button><button class="btn" data-a="save" title="보관함에 새 항목으로 저장합니다">📄 새로 저장</button>')
    :'<button class="btn pri" data-a="save">💾 새로 저장</button>')+'</span></div>'
-  +'<div class="bxboard'+(n>=4?' c4':'')+(n>=6?' c6':'')+'" id="capboard" style="--cols:'+cols+'"><div class="bxcap nocap-only"><b>'+esc(state.title||'상품명 미입력')+'</b> '+CH_NAME[state.ch]+' / '+today()+'</div>';
+  +'<div class="bxboard'+(n>=4?' c4':'')+(n>=6?' c6':'')+'" id="capboard" style="--cols:'+cols+';--W:'+W+'px"><div class="bxcap nocap-only"><b>'+esc(state.title||'상품명 미입력')+'</b> '+CH_NAME[state.ch]+' / '+today()+'</div>';
  os.forEach(function(x,k){h+=bCard(k,x,mx)});
  if(n<3)h+=bSum(os,3-n);
  h+='</div>'
-  +'<div class="bxwrap'+(n>=4?' wide':'')+'"><div class="bxp bxin"><div class="bxh3">✏️ <span data-bind="nm'+i+'">'+esc(nm(i))+'</span> 입력<span class="bxtabs">'
+  +'<div class="bxwrap'+(n>=4?' wide':'')+'" style="--tw:'+tw+'px"><div class="bxp bxin"><div class="bxh3">✏️ <span data-bind="nm'+i+'">'+esc(nm(i))+'</span> 입력<span class="bxtabs">'
   +state.sc.map(function(x,k){return '<button class="'+(k===i?'on':'')+'" data-a="bsel" data-i="'+k+'">'+(k+1)+'안</button>'}).join('')+'</span></div>'
   +'<div class="bxnmrow"><span>안 이름</span><input class="in tx" data-p="sc.'+i+'.name" data-t="s" data-nmph="'+i+'" placeholder="'+esc(nm(i))+'" value="'+esc(state.sc[i].name)+'"></div>'
   +card(i,o,os.length>1,true)
