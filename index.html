@@ -85,6 +85,7 @@ em{font-style:normal;color:var(--tx3);font-size:11px;width:14px}
 .ry{background:var(--pn2);border:1px solid var(--bd);border-radius:10px;padding:8px;margin:6px 0}
 .ry .l2{display:flex;gap:4px;align-items:center;margin-top:6px;flex-wrap:wrap;font-size:11px;color:var(--tx3)}
 .ry .r .in.tx{width:150px;text-align:left}
+.ry .rg{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}.ry .rk{font-size:11.5px;color:var(--tx2);white-space:nowrap}.ry .ru{font-size:12px;color:var(--tx2);margin-left:-1px}
 .ry .in.y{width:56px}.ry select.in.y{width:118px}.ry .am{margin-left:auto;font-weight:600;color:var(--tx);font-size:12px}
 .add{border:1px dashed var(--bd2);background:none;border-radius:8px;padding:4px 10px;color:var(--tx3);width:100%;margin-top:2px}
 .add:hover{color:var(--ac);border-color:var(--ac)}
@@ -200,7 +201,7 @@ textarea.in{width:100%;text-align:left;padding:8px;height:86px;resize:vertical}
 <div id="app"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-/*VERSION*/var APP_VERSION='1.0024.1',APP_UPDATED='2026-11-25 12:53';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
+/*VERSION*/var APP_VERSION='1.0024.2',APP_UPDATED='2026-11-27 09:00';   // tools/release.py가 올릴 때마다 갱신 (형식: 주요.세밀(4자리).빌드, 시각은 한국시간)
 /*ENGINE_START*/
 // 손익 계산 엔진 (화면과 분리. test_engine.js가 이 구간만 꺼내 예시 값과 대조)
 var ROY_BASES=['판매가(VAT포함)','매출(VAT제외)','공급가','원가합계','구성품1원가'];
@@ -534,9 +535,13 @@ function card(i,o,multi,bodyOnly){
  h+=sx(K+'b','구성 (견적 원가)','원가 '+fmt(o.cost)+'원 · '+(o.weight>0?fmt(o.weight)+'g':'g 미입력'),b,true);
  // 3) 판관비 1
  b=(bc?'<div class="note">방송 프로모션은 채널사와 반반 부담합니다. 입력은 VAT 포함 총액이고, '+pc(o.pshare,0)+'만 VAT 제외로 환산해 우리 비용에 반영합니다.'+(o.arsIn>0||o.petcIn>0?' 우리 부담: ARS <b>'+fmt(o.arsMine)+'원</b> · 쿠폰·기타 <b>'+fmt(o.petc)+'원</b>':'')+'</div>':'')+row(bc?'프로모션 ARS (총액)':'프로모션 ARS',N(P+'ars',s.ars,'n','원','예: 5,000'))+row(bc?'쿠폰·기타 프로모션 (VAT 포함 총액)':'쿠폰·기타 프로모션 (VAT 제외)',SEL(P+'pmode',s.pmode==='pct'?'pct':'amt',['amt','pct'],'y sm',null,['금액 (원)','비율 (%)'])+(s.pmode==='pct'?N(P+'petcr',s.petcr,'p','%','예: 10'):N(P+'petc',s.petc,'n','원','예: 10,000')));
+ b+='<div class="note">로열티·밴더 금액 = 기준 금액 x 적용 비율(%) x 요율(%). 적용 비율은 보통 100%입니다.</div>';
  ['로열티 1','로열티 2','밴더'].forEach(function(l,j){var Q=P+'roy.'+j+'.',r=s.roy[j];
   b+='<div class="ry"><div class="r"><span>'+l+'</span>'+TX(Q+'n',r.n,'예: IP·셀럽·밴더')+'</div><div class="l2">'
-   +SEL(Q+'b',r.b,ROY_BASES,'y','(기준 선택)')+' x'+N(Q+'x',r.x,'p','')+' 요율'+N(Q+'r',r.r,'p','','예: 3')+'<span class="am">'+fmt(o.ra[j])+'원</span></div></div>'});
+   +'<span class="rg"><span class="rk">기준</span>'+SEL(Q+'b',r.b,ROY_BASES,'y','(기준 선택)')+'</span>'
+   +'<span class="rg"><span class="rk" title="기준 금액 중 몇 %에 요율을 적용할지 (보통 100%)">x 적용 비율</span>'+N(Q+'x',r.x,'p','')+'<span class="ru">%</span></span>'
+   +'<span class="rg"><span class="rk">x 요율</span>'+N(Q+'r',r.r,'p','','예: 3')+'<span class="ru">%</span></span>'
+   +'<span class="am">= '+fmt(o.ra[j])+'원</span></div></div>'});
  h+=sx(K+'c','판관비 1','-'+fmt(o.sga1)+'원',b,false);
  // 4) 판관비 2 (방송만)
  if(bc){
